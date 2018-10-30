@@ -1,0 +1,4 @@
+show ccmts
+show board
+show cable modem summary
+show running-config
