@@ -93,19 +93,20 @@ class UpgradeCcmts(UpgradeOlt):
                 self.closeChannelList[key] = []
                 self.send('interface ccmts {}'.format(key))
                 self.readuntil('(config-if-ccmts-{})#'.format(key))
-                self.send('show running-config | include no cable.*shutdown')
+                self.send('show running-config | include no cable upstream .*shutdown')
                 re = self.readuntil('(config-if-ccmts-{})#'.format(key))
                 lines = re.split('\r\n')
                 for line in lines:
-                    if 'Filtering...' in line or '#' in line or 'show running-config | include no cable.*shutdown' in line:
+                    if 'Filtering...' in line or '#' in line or 'show running-config | include no cable upstream .*shutdown' in line:
                         continue
                     else :
                         self.log('ccmts{} open channel cmd({}) append'.format(key,line))
                         self.closeChannelList[key].append(line)
                 self.send('cable upstream 1-4 shutdown')
                 self.readuntil('(config-if-ccmts-{})#'.format(key))
-                self.send('cable downstream 1-16 shutdown')
-                self.readuntil('(config-if-ccmts-{})#'.format(key))
+                #用服提出只关闭上行就可以了，下行关闭后如果是eqam信道重新开启很麻烦，与吕海艇沟通确认对方案没有影响
+                # self.send('cable downstream 1-16 shutdown')
+                # self.readuntil('(config-if-ccmts-{})#'.format(key))
                 self.send('exit')
                 self.readuntil('(config)#')
     def openChannel(self):
@@ -218,6 +219,7 @@ class UpgradeCcmts(UpgradeOlt):
             for slot, portMap in self.allCmts.items():
                 for port, deviceList in portMap.items():
                     for device in deviceList:
+                        key = '{}/{}/{}'.format(slot,port,device)
                         nversion = self.allVersion[key]
                         if nversion != None and nversion != 'no version' and nversion != '' and nversion != self.version:
                             key = '{}/{}/{}'.format(slot, port, device)
