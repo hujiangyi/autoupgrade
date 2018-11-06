@@ -216,6 +216,7 @@ class UpgradeCcmts(UpgradeOlt):
             self.send('configure terminal')
             self.readuntil('(config)#')
 
+            self.log('第一轮下发升级指令')
             for slot, portMap in self.allCmts.items():
                 for port, deviceList in portMap.items():
                     for device in deviceList:
@@ -223,14 +224,59 @@ class UpgradeCcmts(UpgradeOlt):
                         nversion = self.allVersion[key]
                         if nversion != None and nversion != 'no version' and nversion != '' and nversion != self.version:
                             key = '{}/{}/{}'.format(slot, port, device)
+                            self.log('开始升级{}'.format(key))
                             self.send('upgrade mdu image ftp {} {} {} {} interface {}'.format(ftpServer ,ftpUsername,ftpPassword,imageFileName,key ))
                             self.readuntil('(config)#')
                             self.sleepT(3)
+
+            self.log('第二轮下发升级指令')
+            for slot, portMap in self.allCmts.items():
+                for port, deviceList in portMap.items():
+                    for device in deviceList:
+                        key = '{}/{}/{}'.format(slot,port,device)
+                        nversion = self.allVersion[key]
+                        if nversion != None and nversion != 'no version' and nversion != '' and nversion != self.version:
+                            key = '{}/{}/{}'.format(slot, port, device)
+                            state, result = self.checkCmtsIsDownloadFail(key)
+                            if state:
+                                self.log('{}第一轮下发升级指令失败，重新下发一次'.format(key))
+                                self.send('upgrade mdu image ftp {} {} {} {} interface {}'.format(ftpServer ,ftpUsername,ftpPassword,imageFileName,key ))
+                                self.readuntil('(config)#')
+                                self.sleepT(3)
+
+            self.log('第三轮下发升级指令')
+            for slot, portMap in self.allCmts.items():
+                for port, deviceList in portMap.items():
+                    for device in deviceList:
+                        key = '{}/{}/{}'.format(slot,port,device)
+                        nversion = self.allVersion[key]
+                        if nversion != None and nversion != 'no version' and nversion != '' and nversion != self.version:
+                            state, result = self.checkCmtsIsDownloadFail(key)
+                            if state:
+                                self.log('{}第二轮下发升级指令失败，重新下发一次'.format(key))
+                                self.send('upgrade mdu image ftp {} {} {} {} interface {}'.format(ftpServer ,ftpUsername,ftpPassword,imageFileName,key ))
+                                self.readuntil('(config)#')
+                                self.sleepT(3)
             return True
         else :
             return False
 
-
+    def checkCmtsIsDownloadFail(self,key):
+        self.send('show mdu image-upgrade-status interface {}'.format(key))
+        re = self.readuntil('(config)#')
+        lines = re.split('\r\n')
+        for line in lines:
+            if '' == line.strip():
+                continue
+            if 'show mdu image-upgrade-status interface' in line:
+                continue
+            if 'Filtering...' in line:
+                continue
+            if '#' in line:
+                continue
+            if 'Download image failed.'in line:
+                return  True,line
+        return False,re
     ####################################################CC upgrade######################################################
     def confgVlan(self,vlan,gateway):
         self.log('makeVlan {} gateway {}.254.0.1'.format(vlan,gateway))

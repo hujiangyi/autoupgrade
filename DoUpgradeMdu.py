@@ -11,7 +11,7 @@ import xlrd
 from Tkinter import *
 from tkFileDialog import *
 from tkMessageBox import *
-from UpgradeOlt.tools.UpgradeCcmts import *
+from tools.UpgradeCcmts import *
 from xlutils.copy import copy
 from utils.ListView import *
 
@@ -64,7 +64,17 @@ def closeDialog():
         showerror('error','cm vlan can not be null')
         return
     root.destroy()
-    doUpgradeMud()
+    try:
+        doUpgradeMud()
+    except ValueError, e:
+        msg = str(e)
+        if "IP Address format was invalid" in msg:
+            print "Excel中IP地址填写错误，可能是多了空行或者多了空格，请仔细检查"
+        elif "has invalid prefix length" in msg:
+            print "再或者网段地址填写成了具体的IP地址，请仔细检查"
+        else :
+            print "参数填写错误，请仔细检查各项参数设置，包括Excel"
+        print 'traceback.format_exc():\n%s' % traceback.format_exc()
 
 def doUpgradeMud():
     resultDialog = Tk()
