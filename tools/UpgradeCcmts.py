@@ -51,6 +51,7 @@ class UpgradeCcmts(UpgradeOlt):
             print 'traceback.format_exc():\n%s' % traceback.format_exc()
         finally:
             self.openChannel()
+            self.log('upgrade success')
     def doCollectData(self):
         try:
             self.collectData('after')
@@ -110,7 +111,7 @@ class UpgradeCcmts(UpgradeOlt):
                 self.send('exit')
                 self.readuntil('(config)#')
     def openChannel(self):
-        self.log('openChannel')
+        self.log('start openChannel')
         self.send('end')
         self.readuntil('#')
         self.send('configure terminal')
@@ -118,11 +119,13 @@ class UpgradeCcmts(UpgradeOlt):
         for key in self.closeChannelCmtsKeys:
             self.send('interface ccmts {}'.format(key))
             self.readuntil('(config-if-ccmts-{})#'.format(key))
+            self.log('open cmts[{}] Channel'.format(key))
             if self.closeChannelList.has_key(key) :
                 closeChannelCmdList = self.closeChannelList[key]
                 for line in closeChannelCmdList:
                     self.send(line)
                     self.readuntil('(config-if-ccmts-{})#'.format(key))
+        self.log('emd openChannel')
     def mduUpgrade(self,vlan,gateway,ftpServer,ftpUsername,ftpPassword,imageFileName):
         self.log('mduUpgrade')
         self.allCmts,self.allkey,self.allVersion,self.allMac = self.getAllOnlineCmts(raiseException=True)
