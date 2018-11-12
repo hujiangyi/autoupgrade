@@ -111,8 +111,8 @@ class ConfigCcmtsIp(UpgradeOlt):
             while True:
                 if cmIp == self.cmgateway :
                     cmIp = self.parent.nextIp()
-                r = ping(cmIp)
-                if r.ret_code == 0 :
+                r = self.ping(cmIp)
+                if r :
                     cmIp = self.parent.nextIp()
                     if cmIp == self.cmgateway:
                         cmIp = self.parent.nextIp()
