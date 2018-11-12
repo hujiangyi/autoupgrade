@@ -7,7 +7,7 @@ from UpgradeOlt import *
 class ResetCcmtsDol(UpgradeOlt):
     def run(self):
         self.initLog(self.logPath,self.host)
-        self.doTelnet()
+        self.doConnect()
         # self.doConfig()
     def initLog(self,logPath,host):
         key = '{}_{}_{}'.format(self.slot,self.port,self.device)
@@ -30,7 +30,7 @@ class ResetCcmtsDol(UpgradeOlt):
         self.port = port
         self.device = device
         self.mac = mac
-        self.setTelnetArg(host,isAAA,userName,password,enablePassword)
+        self.setArg(host,isAAA,userName,password,enablePassword)
         self.logPath = logPath
 
     def getResetResult(self):

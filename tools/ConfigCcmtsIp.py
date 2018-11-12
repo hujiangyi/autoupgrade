@@ -6,7 +6,7 @@ from UpgradeOlt import *
 class ConfigCcmtsIp(UpgradeOlt):
     def run(self):
         self.initLog(self.logPath,self.host)
-        self.doTelnet()
+        self.doConnect()
         self.doConfig()
         self.close()
     def initLog(self,logPath,host):
@@ -35,7 +35,7 @@ class ConfigCcmtsIp(UpgradeOlt):
         self.cmvlan = cmvlan
         self.mac = mac
         self.initCmIpArg(cmip,mask,cmgateway)
-        self.setTelnetArg(host,isAAA,userName,password,enablePassword)
+        self.setArg(host,isAAA,userName,password,enablePassword)
         self.logPath = logPath
 
     def getUpgradeResult(self):

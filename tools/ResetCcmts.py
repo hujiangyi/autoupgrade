@@ -11,7 +11,7 @@ class ResetCcmts(UpgradeOlt):
         self.session2 = ResetCcmtsDol()
         self.session2.connect(self,self.host, self.isAAA, self.userName, self.password, self.enablePassword,self.gateway,self.slot,self.port,self.device,self.logPath,self.mac)
         self.session2.run()
-        self.doTelnet()
+        self.doConnect()
         self.doConfig()
         self.close()
     def initLog(self,logPath,host):
@@ -35,7 +35,7 @@ class ResetCcmts(UpgradeOlt):
         self.port = port
         self.device = device
         self.mac = mac
-        self.setTelnetArg(host,isAAA,userName,password,enablePassword)
+        self.setArg(host,isAAA,userName,password,enablePassword)
         self.logPath = logPath
 
     def getResetResult(self):

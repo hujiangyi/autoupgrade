@@ -11,7 +11,7 @@ class PingTest(UpgradeOlt) :
              "password":self.password,
              "enablePassword":self.enablePassword}
         self.listView.insertRow(row)
-        self.doTelnet()
+        self.doConnect()
         re = self.ping('50.7.4.1')
         print re
 
@@ -22,4 +22,4 @@ class PingTest(UpgradeOlt) :
         self.initListView(listView)
         self.initExcel(sheetW,excelRow)
         self.initLog(logPath,host)
-        self.setTelnetArg(host,isAAA,userName,password,enablePassword)
+        self.setArg(host,isAAA,userName,password,enablePassword)

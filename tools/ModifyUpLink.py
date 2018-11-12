@@ -14,7 +14,7 @@ class ModifyUpLink(UpgradeCcmts):
              "password":self.password,
              "enablePassword":self.enablePassword}
         self.listView.insertRow(row)
-        self.doTelnet()
+        self.doConnect()
         self.doConfig()
     def doConfig(self):
         try:
@@ -43,7 +43,7 @@ class ModifyUpLink(UpgradeCcmts):
         self.initListView(listView)
         self.initExcel(sheetW,excelRow)
         self.initLog(logPath,host)
-        self.setTelnetArg(host,isAAA,userName,password,enablePassword)
+        self.setArg(host,isAAA,userName,password,enablePassword)
 
     def configUplink(self,vlan,gateway,ftpServer,ftpUsername,ftpPassword,configFile):
         self.log('configUplink')

@@ -4,7 +4,7 @@ class UpgradeOltFtpServer(UpgradeOlt):
     def connect(self,host,isAAA,userName,password,enablePassword,ftpIp,ftpUserName,ftpPassword):
         print 'connect to host ' + host
         try:
-            self.setTelnetArg(host,isAAA,userName,password,enablePassword)
+            self.setArg(host,isAAA,userName,password,enablePassword)
             self.ftpIp = ftpIp
             self.ftpUserName = ftpUserName
             self.ftpPassword = ftpPassword

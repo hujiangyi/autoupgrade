@@ -15,7 +15,7 @@ class UpgradeOltFtpClient(UpgradeOlt):
              "password":self.password,
              "enablePassword":self.enablePassword}
         self.listView.insertRow(row)
-        self.doTelnet()
+        self.doConnect()
         self.doUpgrade()
     def doUpgrade(self):
         try:
@@ -82,7 +82,7 @@ class UpgradeOltFtpClient(UpgradeOlt):
             self.upgradeBootrom = upgradeBootrom
             self.writeFile = writeFile
             self.reboot = reboot
-            self.setTelnetArg(host,isAAA,userName,password,enablePassword)
+            self.setArg(host,isAAA,userName,password,enablePassword)
         except BaseException, msg:
             print msg
             msg = 'telnet connecting failed'

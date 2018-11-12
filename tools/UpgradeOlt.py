@@ -1,11 +1,12 @@
 from threading import *
-from telnetlib import *
 from IPy import *
 from pyping import *
 import time
 import datetime
 import os
 import traceback
+from utils.TelnetVty import TelnetVty
+from utils.SshVty import SshVty
 
 class UpgradeOlt(Thread):
     def __init__(self):
@@ -27,45 +28,21 @@ class UpgradeOlt(Thread):
         self.retryThread.retryList.append(arg)
 
     #################################################init###############################################################
-    def doTelnet(self):
-        try:
-            self.telnet = Telnet(self.host)
-        except BaseException, msg:
-            print msg
-            msg = 'host is unreachable!'
-            self.writeResult(msg)
-            print 'traceback.format_exc():\n%s' % traceback.format_exc()
-    def reconnect(self):
-        self.close()
-        self.log('reconnect telnet')
-        self.doTelnet()
-        self.send('')
-        self.sleepT(3)
-        self.readuntil('#')
-        self.log('reconnect telnet end')
-
-
-    def setTelnetArg(self, host, isAAA, userName, password, enablePassword):
-        self.host = host
-        self.isAAA = isAAA
-        self.userName = userName
-        self.password = password
-        self.enablePassword = enablePassword
-        self.log(self.host + ' ' + self.isAAA + '' + self.userName + '' + self.password + '' + self.enablePassword)
-    def setAppPath(self,appPath):
+    def setAppPath(self, appPath):
         self.appPath = appPath
 
-    def initCmIpArg(self,cmip,mask,cmgateway):
+    def initCmIpArg(self, cmip, mask, cmgateway):
         self.cmip = cmip
         self.mask = mask
         self.cmgateway = cmgateway
         if self.cmip == None or self.cmip == '':
             self.useNetRange = False
-        else :
+        else:
             self.useNetRange = True
             self.ips = IP(self.cmip + '/' + self.mask)
-            self.ipsIndex = 0
+            self.ipsIndex = 10
             self.ipsIndexLock = Lock()
+
     def nextIp(self):
         self.ipsIndexLock.acquire()
         try:
@@ -73,154 +50,57 @@ class UpgradeOlt(Thread):
             return self.ips[self.ipsIndex].strCompressed()
         finally:
             self.ipsIndexLock.release()
-    def initLog(self,logPath,host):
+
+    def initLog(self, logPath, host):
         self.logPath = logPath
         self.cmdResultFile = open(logPath + host + "CmdResult.log", "w")
         self.logResultFile = open(logPath + host + "logFile.log", "w")
 
-    def initListView(self,listView):
+    def initListView(self, listView):
         self.listView = listView
-    def initExcel(self,sheetW,excelRow):
+
+    def initExcel(self, sheetW, excelRow):
         self.sheetW = sheetW
         self.excelRow = excelRow
 
-    ###############################################com##################################################################
+    #################################################init###############################################################
+    def doConnect(self):
+        self.client.doConnect()
+
+    def reconnect(self):
+        self.client.reconnect()
+
+
+    def setArg(self, host, isAAA, userName, password, enablePassword):
+        self.host = host
+        self.isAAA = isAAA
+        self.userName = userName
+        self.password = password
+        self.enablePassword = enablePassword
+        self.client = TelnetVty(self)
+        self.client.setArg(host,isAAA,userName,password,enablePassword)
+
     def close(self):
-        try:
-            self.log('close telnet ')
-            self.telnet.close()
-        except Exception, msg:
-            self.log(`msg`)
-            msg = 'telnet close failed'
-            raise Exception(msg)
+        self.client.close()
 
     def send(self, cmd):
-        terminator = '\r'
-        cmd = str(cmd)
-        cmd += terminator
-        try:
-            msg = cmd
-            self.telnet.write(cmd)
-        except Exception, msg:
-            self.log(`msg`)
-            raise Exception("telnet write error!")
+        self.client.send(cmd)
 
     def sendII(self, cmd):
-        cmd = str(cmd)
-        try:
-            msg = cmd
-            self.telnet.write(cmd)
-        except Exception, msg:
-            self.log(`msg`)
-            raise Exception("telnet write error!")
-
-    def read(self, delay=1):
-        str = self.telnet.read_very_eager()
-        self.cmdLog(str)
-        return str
+        self.client.sendII(cmd)
 
     def readuntil(self, waitstr='xxx', timeout=0):
-        tmp = ""
-        if timeout != 0:
-            delay = 0.0
-            while delay <= timeout:
-                tmp += self.read()
-                time.sleep(1)
-                if tmp.endswith('--More--'):
-                    self.sendII(' ')
-                if waitstr in tmp:
-                    return tmp
-                delay += 1
-            raise Exception("wait str timeout")
-        else:
-            while True:
-                tmp += self.read()
-                #self.log(tmp)
-                if self.needLogin(tmp):
-                    tmp = ''
-                    self.send('')
-                    tmp += self.read()
-                if waitstr in tmp:
-                    return tmp
+        return self.client.readuntil(waitstr=waitstr,timeout=timeout)
 
     def readuntilMutl(self, waitstrs=['xxx'], timeout=0):
-        tmp = ""
-        if timeout != 0:
-            delay = 0.0
-            while delay <= timeout:
-                time.sleep(1)
-                tmp += self.read()
-                if tmp.endswith('--More--'):
-                    self.sendII(' ')
-                for waitstr in waitstrs:
-                    if waitstr in tmp:
-                        return tmp
-                delay += 1
-            raise Exception("wait str timeout")
-        else:
-            while True:
-                tmp += self.read()
-                #self.log(tmp)
-                if self.needLogin(tmp):
-                    tmp = ''
-                    self.send('')
-                    tmp += self.read()
-                for waitstr in waitstrs:
-                    if waitstr in tmp:
-                        return tmp
+        return self.client.readuntilMutl(waitstrs=waitstrs,timeout=timeout)
 
     def readuntilII(self, waitstr='xxx', timeout=0):
-        tmp = ""
-        if timeout != 0:
-            delay = 0.0
-            while delay <= timeout:
-                time.sleep(1)
-                tmp += self.read()
-                if waitstr in tmp:
-                    return tmp
-                delay += 1
-            raise Exception("wait str timeout")
-        else:
-            while True:
-                tmp += self.read()
-                if waitstr in tmp:
-                    return tmp
-
-    def needLogin(self, str):
-        try:
-            #self.log('CLI timeout need login.')
-            if self.isAAA == '1':
-                if 'sername:' in str :
-                    self.send('')
-                    re = self.readuntilII(waitstr='sername:', timeout=30)
-                    self.send(self.userName)
-                    self.readuntilII(waitstr='assword:', timeout=30)
-                    self.send(self.password)
-                    self.readuntilII('>', timeout=30)
-                    self.send('en')
-                    self.readuntilII('#', timeout=30)
-                    return True
-                else :
-                    return False
-            else:
-                if 'assword:' in str :
-                    self.send('')
-                    self.readuntilII(waitstr='assword:', timeout=30)
-                    self.send(self.password)
-                    self.readuntilII('>', timeout=30)
-                    self.send('en')
-                    self.readuntilII('Enable Password:', timeout=30)
-                    self.send(self.enablePassword)
-                    self.readuntilII('#', timeout=30)
-                    return True
-                else :
-                    return False
-        except Exception, msg:
-            self.log(`msg`)
-            raise Exception("login faild!")
+        return self.client.readuntilII(waitstr=waitstr,timeout=timeout)
 
     def sleepT(self, delay):
         time.sleep(delay)
+
     def getMainBoardTypes(self):
         return ['mpu', 'mpub', 'meu', 'mef', 'mgu']
 
@@ -305,7 +185,7 @@ class UpgradeOlt(Thread):
             if r.ret_code == 0 :
                 break
         time.sleep(180)
-        self.doTelnet()
+        self.doConnect()
         self.send('')
         self.readuntil('#')
         while True:

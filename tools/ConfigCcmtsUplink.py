@@ -4,7 +4,7 @@ from UpgradeOlt import *
 
 class ConfigCcmtsUplink(UpgradeOlt):
     def run(self):
-        self.doTelnet()
+        self.doConnect()
         self.doConfig()
         self.close()
     def doConfig(self):
@@ -29,7 +29,7 @@ class ConfigCcmtsUplink(UpgradeOlt):
         self.port = port
         self.device = device
         self.initCmIpArg(cmip,mask,cmgateway)
-        self.setTelnetArg(host,isAAA,userName,password,enablePassword)
+        self.setArg(host,isAAA,userName,password,enablePassword)
 
     def getConfigResult(self):
         return self.state,self.msg

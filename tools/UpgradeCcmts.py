@@ -22,7 +22,7 @@ class UpgradeCcmts(UpgradeOlt):
              "password":self.password,
              "enablePassword":self.enablePassword}
         self.listView.insertRow(row)
-        self.doTelnet()
+        self.doConnect()
         self.doUpgrade()
     def doUpgrade(self):
         try:
@@ -75,7 +75,7 @@ class UpgradeCcmts(UpgradeOlt):
         self.initListView(listView)
         self.initExcel(sheetW,excelRow)
         self.initLog(logPath,host)
-        self.setTelnetArg(host,isAAA,userName,password,enablePassword)
+        self.setArg(host,isAAA,userName,password,enablePassword)
 
     def closeChannel(self):
         self.log('closeChannel')
