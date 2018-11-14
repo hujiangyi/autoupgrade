@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+#encoding:gbk
 from UpgradeOlt import UpgradeOlt
 
 

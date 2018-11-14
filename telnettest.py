@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+#encoding:gbk
 from telnetlib import *
 import time
 

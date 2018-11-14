@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+#encoding:gbk
 import traceback
 import time
 from ConfigCcmtsUplink import ConfigCcmtsUplink

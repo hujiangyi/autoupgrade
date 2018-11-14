@@ -1,16 +1,11 @@
-#! /usr/bin/env python
-# -*- coding: utf-8 -*-
-# vim:fenc=utf-8
-#
-# Copyright Â© 2014 jay <hujiangyi@dvt.dvt.com>
-#
+#encoding:gbk
 from threading import *
 import xlrd
 from Tkinter import *
 from tkFileDialog import *
 from tkMessageBox import *
 from xlutils.copy import copy
-from UpgradeOlt.tools.UpgradeOltFtpClient import *
+from tools.UpgradeOltFtpClient import *
 from utils.ListView import *
 from utils.RetryThread import *
 
@@ -53,10 +48,10 @@ def doUpgrade() :
     listView.grid(row=0, column=0, columnspan=2)
     cols = [{"key":"ip","width":100,"text":"IP"},
             {"key":"result","width":400,"text":"Result"},
-            {"key":"isAAA","width":100,"text":"æ˜¯å¦å¼€å¯AAA"},
-            {"key":"userName","width":100,"text":"è´¦å·"},
-            {"key":"password","width":100,"text":"å¯†ç "},
-            {"key":"enablePassword","width":100,"text":"enableå¯†ç "}]
+            {"key":"isAAA","width":100,"text":"ÊÇ·ñ¿ªÆôAAA"},
+            {"key":"userName","width":100,"text":"ÕËºÅ"},
+            {"key":"password","width":100,"text":"ÃÜÂë"},
+            {"key":"enablePassword","width":100,"text":"enableÃÜÂë"}]
     listView.initColumn(cols)
     excel = oltExcelPath.get()
     versionPath = imagePath.get()
@@ -120,10 +115,10 @@ Label(root,text='ImagePath').grid(row=1,column=0)
 Entry(root,textvariable=imagePath).grid(row=1,column=1)
 Button(root,text='select',command=selectImagePath).grid(row=1,column=2)
 
-Checkbutton(root, text="æ˜¯å¦ä¸‹è½½é•œåƒ", variable=downloadFlie).grid(row=2,column=0,columnspan=2, sticky=W)
-Checkbutton(root, text="æ˜¯å¦å‡çº§BOOTROM", variable=upgradeBootrom).grid(row=3,column=0,columnspan=2, sticky=W)
-Checkbutton(root, text="æ˜¯å¦WriteFile", variable=writeFile).grid(row=4,column=0,columnspan=2, sticky=W)
-Checkbutton(root, text="æ˜¯å¦Reboot", variable=reboot).grid(row=5,column=0,columnspan=2, sticky=W)
+Checkbutton(root, text="ÊÇ·ñÏÂÔØ¾µÏñ", variable=downloadFlie).grid(row=2,column=0,columnspan=2, sticky=W)
+Checkbutton(root, text="ÊÇ·ñÉı¼¶BOOTROM", variable=upgradeBootrom).grid(row=3,column=0,columnspan=2, sticky=W)
+Checkbutton(root, text="ÊÇ·ñWriteFile", variable=writeFile).grid(row=4,column=0,columnspan=2, sticky=W)
+Checkbutton(root, text="ÊÇ·ñReboot", variable=reboot).grid(row=5,column=0,columnspan=2, sticky=W)
 
 Button(root,text='complte',command=closeDialog).grid(row=6,column=1)
 root.mainloop()

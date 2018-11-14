@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+#encoding:gbk
 from threading import *
 from telnetlib import *
 from IPy import *
@@ -65,7 +65,7 @@ class UpgradeOlt(Thread):
         else :
             self.useNetRange = True
             self.ips = IP(self.cmip + '/' + self.mask)
-            self.ipsIndex = 0
+            self.ipsIndex = 20
             self.ipsIndexLock = Lock()
     def nextIp(self):
         self.ipsIndexLock.acquire()
