@@ -1,5 +1,10 @@
+#! /usr/bin/env python
+# -*- coding: utf-8 -*-
+# vim:fenc=utf-8
+#
+# Copyright © 2014 jay <hujiangyi@dvt.dvt.com>
+#
 from threading import *
-from IPy import *
 from pyping import *
 import time
 import datetime
@@ -31,26 +36,6 @@ class UpgradeOlt(Thread):
     def setAppPath(self, appPath):
         self.appPath = appPath
 
-    def initCmIpArg(self, cmip, mask, cmgateway):
-        self.cmip = cmip
-        self.mask = mask
-        self.cmgateway = cmgateway
-        if self.cmip == None or self.cmip == '':
-            self.useNetRange = False
-        else:
-            self.useNetRange = True
-            self.ips = IP(self.cmip + '/' + self.mask)
-            self.ipsIndex = 10
-            self.ipsIndexLock = Lock()
-
-    def nextIp(self):
-        self.ipsIndexLock.acquire()
-        try:
-            self.ipsIndex = self.ipsIndex + 1
-            return self.ips[self.ipsIndex].strCompressed()
-        finally:
-            self.ipsIndexLock.release()
-
     def initLog(self, logPath, host):
         self.logPath = logPath
         self.cmdResultFile = open(logPath + host + "CmdResult.log", "w")
@@ -65,20 +50,38 @@ class UpgradeOlt(Thread):
 
     #################################################init###############################################################
     def doConnect(self):
-        self.client.doConnect()
+        if self.isSsh :
+            try :
+                self.client.doConnect()
+                self.send('enable')
+                self.readuntil('Enable Password:',timeout=30)
+                self.send(self.enablePassword)
+                self.readuntil('#',timeout=30)
+            except BaseException:
+                msg = 'SSH login error,checkout Enable Password[{}]'.format(self.enablePassword)
+                self.log(msg)
+                self.log('traceback.format_exc():\n%s' % traceback.format_exc())
+                raise Exception(msg)
+        else :
+            self.client.doConnect()
 
     def reconnect(self):
         self.client.reconnect()
 
 
-    def setArg(self, host, isAAA, userName, password, enablePassword):
+    def setArg(self,isSsh, host, isAAA, userName, password, enablePassword):
         self.host = host
         self.isAAA = isAAA
         self.userName = userName
         self.password = password
         self.enablePassword = enablePassword
-        self.client = TelnetVty(self)
-        self.client.setArg(host,isAAA,userName,password,enablePassword)
+        self.isSsh = isSsh
+        if self.isSsh:
+            self.client = SshVty(self)
+            self.client.setArg(host,isAAA,userName,password,enablePassword)
+        else :
+            self.client = TelnetVty(self)
+            self.client.setArg(host,isAAA,userName,password,enablePassword)
 
     def close(self):
         self.client.close()

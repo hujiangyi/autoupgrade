@@ -4,3 +4,5 @@
 /dist
 /image
 /**/*.pyc
+/venv
+/.ipynb_checkpoints

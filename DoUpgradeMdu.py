@@ -14,6 +14,7 @@ from tkMessageBox import *
 from tools.UpgradeCcmts import *
 from xlutils.copy import copy
 from utils.ListView import *
+from utils.IpMaker import *
 
 
 def selectOltExcelPath():
@@ -120,18 +121,25 @@ def doUpgradeMud():
         wi = 0
         sheetW.write(wi, 5, 'upgrade Result')
         wi += 1
-        for i in range(1, nrows):
+        for i in range(2, nrows):
             ip = sheetR.cell(i, 0).value
-            isAAA = sheetR.cell(i, 1).value
-            username = sheetR.cell(i, 2).value
-            password = sheetR.cell(i, 3).value
-            enablePassword = sheetR.cell(i, 4).value
-            cmip = sheetR.cell(i, 5).value
-            mask = sheetR.cell(i, 6).value
-            cmgateway = sheetR.cell(i, 7).value
+            isSsh = "是" == sheetR.cell(i, 1).value
+            isAAA = "是" == sheetR.cell(i, 2).value
+            username = sheetR.cell(i, 3).value
+            password = sheetR.cell(i, 4).value
+            enablePassword = sheetR.cell(i, 5).value
+            ipMakerType = sheetR.cell(i, 6).value
+            segmentIp = sheetR.cell(i, 7).value
+            segmentMask = sheetR.cell(i, 8).value
+            segmentGateway = sheetR.cell(i, 9).value
+            segmentExcludeIpList = sheetR.cell(i, 10).value
+            iplist = sheetR.cell(i, 11).value
+            cmIpMask = sheetR.cell(i, 12).value
+            cmIpGateway = sheetR.cell(i, 13).value
+            ipMaker = IpMaker(ipMakerType,segmentIp,segmentMask,segmentGateway,segmentExcludeIpList,iplist,cmIpMask,cmIpGateway)
             upgradeCcmts = UpgradeCcmts()
-            upgradeCcmts.connect(ip, isAAA, username, password, enablePassword,cmip,mask,cmgateway, logPath, sheetW, i, cvlan, gateway,
-                                 ftpServer, ftpUserName, ftpPassword, imageFileName,int(threadNum),version,cmvlan,listView)
+            upgradeCcmts.connect(ip, isAAA, username, password, enablePassword, logPath, sheetW, i, cvlan, gateway,
+                                 ftpServer, ftpUserName, ftpPassword, imageFileName,int(threadNum),version,cmvlan,listView,ipMaker,isSsh=isSsh)
             upgradeCcmts.setDaemon(True)
             upgradeCcmts.start()
     resultDialog.mainloop()

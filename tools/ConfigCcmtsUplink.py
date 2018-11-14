@@ -1,3 +1,9 @@
+#! /usr/bin/env python
+# -*- coding: utf-8 -*-
+# vim:fenc=utf-8
+#
+# Copyright © 2014 jay <hujiangyi@dvt.dvt.com>
+#
 import traceback
 
 from UpgradeOlt import *
@@ -16,7 +22,7 @@ class ConfigCcmtsUplink(UpgradeOlt):
             print 'traceback.format_exc():\n%s' % traceback.format_exc()
 
 
-    def connect(self,parent,host,isAAA,userName,password,enablePassword,cmip,mask,cmgateway,vlan,gateway,ftpServer,ftpUsername,ftpPassword,configFile,slot,port,device):
+    def connect(self,parent,host,isAAA,userName,password,enablePassword,vlan,gateway,ftpServer,ftpUsername,ftpPassword,configFile,slot,port,device,ipMaker):
         print 'connect to host ' + host
         self.parent = parent
         self.vlan = vlan
@@ -28,7 +34,7 @@ class ConfigCcmtsUplink(UpgradeOlt):
         self.slot = slot
         self.port = port
         self.device = device
-        self.initCmIpArg(cmip,mask,cmgateway)
+        self.ipMaker = ipMaker
         self.setArg(host,isAAA,userName,password,enablePassword)
 
     def getConfigResult(self):
@@ -37,6 +43,7 @@ class ConfigCcmtsUplink(UpgradeOlt):
 
 
     def doConfigCcmts(self,vlan,gateway,ftpServer,ftpUsername,ftpPassword,configFile,slot,port,device):
+        key = '{}/{}/{}'.format(slot,port,device)
         row = {"identifyKey": "ip",
                "ip": slot + '/' + port + '/' + device,
                "result": "start",
@@ -66,40 +73,25 @@ class ConfigCcmtsUplink(UpgradeOlt):
         self.send('admin')
         self.send('admin')
         self.send('enable')
-        re = self.readuntilII('#')
-        cmIp = None
-        if not self.useNetRange :
-            self.send('show cable modem | include online')
-            re = self.readuntil('#')
-            lines = re.split('\r\n')
-            if len(lines) > 1  and "online" in lines[1]:
-                cols = lines[1].split()
-                cmIp = cols[1]
-                self.cmgateway = None
-                self.parent.log('cmts ip is ' + cmIp, cmts=slot + '/' + port + '/' + device)
-                state,msg = self.configCmtsIp(cmIp, ftpServer,ftpUsername,ftpPassword,configFile,slot,port,device)
+        self.readuntilII('#')
+        cmtsIp, cmtsMask, cmtsGateway = self.ipMaker.nextIp()
+        while True:
+            if cmtsIp == cmtsGateway:
+                cmtsIp = self.ipMaker.nextIp()
+            r = self.ping(cmtsIp)
+            if r:
+                cmtsIp = self.ipMaker.nextIp()
+                if cmtsIp == cmtsGateway:
+                    cmtsIp = self.ipMaker.nextIp()
             else:
-                self.parent.log('cmts does not specify.', cmts=slot + '/' + port + '/' + device)
-                return False, 'cmts does not specify.'
-        else :
-            cmIp = self.parent.nextIp()
-            while True:
-                if cmIp == self.cmgateway :
-                    cmIp = self.parent.nextIp()
-                r = ping(cmIp)
-                if r.ret_code == 0 :
-                    cmIp = self.parent.nextIp()
-                    if cmIp == self.cmgateway:
-                        cmIp = self.parent.nextIp()
-                else:
-                    break
-            self.parent.log('cmts ip is ' + cmIp, cmts=slot + '/' + port + '/' + device)
-            state,msg = self.configCmtsIp(cmIp,ftpServer,ftpUsername,ftpPassword,configFile,slot,port,device)
-            while not state:
-                cmIp = self.parent.nextIp()
-                if cmIp == self.cmgateway :
-                    cmIp = self.parent.nextIp()
-                state, msg = self.configCmtsIp(cmIp, ftpServer,ftpUsername,ftpPassword,configFile,slot,port,device)
+                break
+        self.parent.log('cmts ip is {}'.format(cmtsIp), cmts=key)
+        state, msg = self.configCmtsIp(cmtsIp, cmtsMask, cmtsGateway, ftpServer, slot, port, device)
+        while not state:
+            cmtsIp = self.parent.nextIp()
+            if cmtsIp == cmtsGateway:
+                cmtsIp = self.parent.nextIp()
+            state, msg = self.configCmtsIp(cmtsIp, cmtsMask, cmtsGateway, ftpServer, slot, port, device)
         self.send('exit')
         self.readuntil('>')
         self.send('exit')

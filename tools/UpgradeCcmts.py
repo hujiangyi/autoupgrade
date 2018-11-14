@@ -9,6 +9,7 @@ import time
 from UpgradeOlt import UpgradeOlt
 from ConfigCcmtsIp import ConfigCcmtsIp
 from ResetCcmts import ResetCcmts
+from IPy import *
 
 
 class UpgradeCcmts(UpgradeOlt):
@@ -34,6 +35,8 @@ class UpgradeCcmts(UpgradeOlt):
             # cm多的话，olt可能会扛不住
             # lvhaiting(吕海艇)
             # 会出现异常
+            if self.ipMaker.ipMakerType == 'CMIP':
+                self.recordCmIp()
             self.closeChannel()
             self.doResetCmts(beforeUpgrade=True)
             state = self.mduUpgrade(self.vlan,self.gateway,self.ftpServer,self.ftpUserName,self.ftpPassword,self.imageFileName)
@@ -59,7 +62,7 @@ class UpgradeCcmts(UpgradeOlt):
             self.log(`msg`)
             print 'traceback.format_exc():\n%s' % traceback.format_exc()
 
-    def connect(self,host,isAAA,userName,password,enablePassword,cmip,mask,cmgateway,logPath,sheetW,excelRow,vlan,gateway,ftpServer,ftpUserName,ftpPassword,imageFileName,threadNum,version,cmvlan,listView):
+    def connect(self,host,isAAA,userName,password,enablePassword,logPath,sheetW,excelRow,vlan,gateway,ftpServer,ftpUserName,ftpPassword,imageFileName,threadNum,version,cmvlan,listView,ipMaker,isSsh=False):
         print 'connect to host ' + host
         self.listView = listView
         self.vlan = vlan
@@ -71,11 +74,38 @@ class UpgradeCcmts(UpgradeOlt):
         self.threadNum = threadNum
         self.version = version
         self.cmvlan = cmvlan
-        self.initCmIpArg(cmip,mask,cmgateway)
+        self.ipMaker = ipMaker
         self.initListView(listView)
         self.initExcel(sheetW,excelRow)
         self.initLog(logPath,host)
-        self.setArg(host,isAAA,userName,password,enablePassword)
+        self.setArg(isSsh,host,isAAA,userName,password,enablePassword)
+
+    def recordCmIp(self):
+        self.log('start recordCmIp')
+        self.send('end')
+        self.readuntil('#')
+        self.send('show cable modem | include online')
+        re = self.readuntil('#')
+        lines = re.split('\r\n')
+        cmIpList = []
+        for line in lines:
+            if '' == line.strip():
+                continue
+            if 'show cable modem' in line:
+                continue
+            if 'Filtering...' in line:
+                continue
+            if '#' in line:
+                continue
+            cols = line.split()
+            ip = cols[1].strip()
+            try :
+                IP(ip)
+                cmIpList.append(ip)
+            except BaseException:
+                continue
+        self.ipMaker.setCmIpList(cmIpList)
+        self.log('end recordCmIp')
 
     def closeChannel(self):
         self.log('closeChannel')
@@ -125,7 +155,7 @@ class UpgradeCcmts(UpgradeOlt):
                 for line in closeChannelCmdList:
                     self.send(line)
                     self.readuntil('(config-if-ccmts-{})#'.format(key))
-        self.log('emd openChannel')
+        self.log('end openChannel')
     def mduUpgrade(self,vlan,gateway,ftpServer,ftpUsername,ftpPassword,imageFileName):
         self.log('mduUpgrade')
         self.allCmts,self.allkey,self.allVersion,self.allMac = self.getAllOnlineCmts(raiseException=True)
@@ -168,9 +198,8 @@ class UpgradeCcmts(UpgradeOlt):
                                         break
                                 if len(upgradeThreads) < self.threadNum :
                                     configCcmtsIp = ConfigCcmtsIp()
-                                    configCcmtsIp.connect(self,self.host, self.isAAA, self.userName, self.password, self.enablePassword, self.cmip, self.mask,
-                                                         self.cmgateway, slotVlan, slotGateway,
-                                                         ftpServer,slot,port,device,self.slotType['{}'.format(slot)],self.cmvlan,self.logPath,mac)
+                                    configCcmtsIp.connect(self,self.host, self.isAAA, self.userName, self.password, self.enablePassword, slotVlan, slotGateway,
+                                                         ftpServer,slot,port,device,self.slotType['{}'.format(slot)],self.cmvlan,self.logPath,mac,self.ipMaker,isSsh=self.isSsh)
                                     configCcmtsIp.setDaemon(True)
                                     configCcmtsIp.start()
                                     upgradeThreads.append(configCcmtsIp)

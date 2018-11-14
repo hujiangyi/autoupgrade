@@ -1,9 +1,15 @@
+#! /usr/bin/env python
+# -*- coding: utf-8 -*-
+# vim:fenc=utf-8
+#
+# Copyright © 2014 jay <hujiangyi@dvt.dvt.com>
+#
 from threading import *
 import xlrd
 from Tkinter import *
 from tkFileDialog import *
 from tkMessageBox import *
-from UpgradeOlt.tools.UpgradeOltFtpClient import *
+from tools.UpgradeOltFtpClient import *
 from xlutils.copy import copy
 
 root = Tk()

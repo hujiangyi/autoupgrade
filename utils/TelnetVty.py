@@ -1,3 +1,9 @@
+#! /usr/bin/env python
+# -*- coding: utf-8 -*-
+# vim:fenc=utf-8
+#
+# Copyright © 2014 jay <hujiangyi@dvt.dvt.com>
+#
 from threading import *
 from telnetlib import *
 import time
@@ -15,13 +21,14 @@ class TelnetVty:
             self.app.log('traceback.format_exc():\n%s' % traceback.format_exc())
             raise Exception("doConnect error")
 
-    def setArg(self, host, isAAA, userName, password, enablePassword):
+    def setArg(self, host, isAAA, userName, password, enablePassword,port=23):
         self.host = host
         self.isAAA = isAAA
         self.userName = userName
         self.password = password
         self.enablePassword = enablePassword
-        self.app.log(self.host + ' ' + self.isAAA + '' + self.userName + '' + self.password + '' + self.enablePassword)
+        self.port = port
+        self.app.log('{} {} {} {} {} {}'.format(self.host,self.isAAA,self.userName,self.password,self.enablePassword,self.port))
 
     def reconnect(self):
         self.close()

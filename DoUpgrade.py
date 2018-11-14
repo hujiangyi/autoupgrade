@@ -10,7 +10,7 @@ from Tkinter import *
 from tkFileDialog import *
 from tkMessageBox import *
 from xlutils.copy import copy
-from UpgradeOlt.tools.UpgradeOltFtpClient import *
+from tools.UpgradeOltFtpClient import *
 from utils.ListView import *
 from utils.RetryThread import *
 

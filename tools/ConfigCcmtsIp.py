@@ -1,3 +1,9 @@
+#! /usr/bin/env python
+# -*- coding: utf-8 -*-
+# vim:fenc=utf-8
+#
+# Copyright © 2014 jay <hujiangyi@dvt.dvt.com>
+#
 import traceback
 import time
 
@@ -22,7 +28,7 @@ class ConfigCcmtsIp(UpgradeOlt):
             self.parent.log('traceback.format_exc():\n%s' % traceback.format_exc())
             print 'traceback.format_exc():\n%s' % traceback.format_exc()
 
-    def connect(self,parent,host,isAAA,userName,password,enablePassword,cmip,mask,cmgateway,vlan,gateway,ftpServer,slot,port,device,slotType,cmvlan,logPath,mac):
+    def connect(self,parent,host,isAAA,userName,password,enablePassword,vlan,gateway,ftpServer,slot,port,device,slotType,cmvlan,logPath,mac,ipMaker,isSsh=False):
         print 'connect to host ' + host
         self.parent = parent
         self.vlan = vlan
@@ -32,10 +38,10 @@ class ConfigCcmtsIp(UpgradeOlt):
         self.port = port
         self.device = device
         self.slotType = slotType
+        self.ipMaker = ipMaker
         self.cmvlan = cmvlan
         self.mac = mac
-        self.initCmIpArg(cmip,mask,cmgateway)
-        self.setArg(host,isAAA,userName,password,enablePassword)
+        self.setArg(isSsh,host,isAAA,userName,password,enablePassword)
         self.logPath = logPath
 
     def getUpgradeResult(self):
@@ -89,42 +95,27 @@ class ConfigCcmtsIp(UpgradeOlt):
         self.send('admin')
         self.send('admin')
         self.send('enable')
-        re = self.readuntilII('#')
-        cmIp = None
+        self.readuntilII('#')
         self.send('show ccmts verbose')
         self.readuntil('#')
-        if not self.useNetRange :
-            self.send('show cable modem | include online')
-            re = self.readuntil('#')
-            lines = re.split('\r\n')
-            if len(lines) > 1  and "online" in lines[1]:
-                cols = lines[1].split()
-                cmIp = cols[1]
-                self.cmgateway = None
-                self.parent.log('cmts ip is {}'.format(cmIp), cmts=key)
-                state,msg = self.configCmtsIp(cmIp, ftpServer,slot,port,device)
+        cmtsIp,cmtsMask,cmtsGateway = self.ipMaker.nextIp()
+        while True:
+            if cmtsIp == cmtsGateway :
+                cmtsIp = self.ipMaker.nextIp()
+            r = self.ping(cmtsIp)
+            if r :
+                cmtsIp = self.ipMaker.nextIp()
+                if cmtsIp == cmtsGateway:
+                    cmtsIp = self.ipMaker.nextIp()
             else:
-                self.parent.log('cmts does not specify.', cmts=key)
-                return False, 'cmts does not specify.'
-        else :
-            cmIp = self.parent.nextIp()
-            while True:
-                if cmIp == self.cmgateway :
-                    cmIp = self.parent.nextIp()
-                r = self.ping(cmIp)
-                if r :
-                    cmIp = self.parent.nextIp()
-                    if cmIp == self.cmgateway:
-                        cmIp = self.parent.nextIp()
-                else:
-                    break
-            self.parent.log('cmts ip is {}'.format(cmIp), cmts=key)
-            state,msg = self.configCmtsIp(cmIp,ftpServer,slot,port,device)
-            while not state:
-                cmIp = self.parent.nextIp()
-                if cmIp == self.cmgateway :
-                    cmIp = self.parent.nextIp()
-                state, msg = self.configCmtsIp(cmIp, ftpServer,slot,port,device)
+                break
+        self.parent.log('cmts ip is {}'.format(cmtsIp), cmts=key)
+        state,msg = self.configCmtsIp(cmtsIp,cmtsMask,cmtsGateway,ftpServer,slot,port,device)
+        while not state:
+            cmtsIp = self.parent.nextIp()
+            if cmtsIp == cmtsGateway :
+                cmtsIp = self.parent.nextIp()
+            state, msg = self.configCmtsIp(cmtsIp,cmtsMask,cmtsGateway, ftpServer,slot,port,device)
         self.send('exit')
         self.readuntil('>')
         self.send('exit')
@@ -133,7 +124,7 @@ class ConfigCcmtsIp(UpgradeOlt):
         return state,msg
 
 
-    def configCmtsIp(self,cmIp,ftpServer,slot,port,device):
+    def configCmtsIp(self,cmtsIp,cmtsMask,cmtsGateway,ftpServer,slot,port,device):
         key = '{}/{}/{}'.format(slot,port,device)
         self.send('end')
         self.readuntil('#')
@@ -158,15 +149,15 @@ class ConfigCcmtsIp(UpgradeOlt):
         if cv != 0:
             self.send('interface vlanif {}'.format(cv))
             self.readuntil('#')
-            self.send('ip address {} {} primary'.format(cmIp,self.mask))
+            self.send('ip address {} {} primary'.format(cmtsIp,cmtsMask))
             self.readuntil('#')
             self.send('exit')
             self.readuntil('#')
         else :
-            self.send('ip address {} {} primary'.format(cmIp,self.mask))
+            self.send('ip address {} {} primary'.format(cmtsIp,cmtsMask))
             self.readuntil('#')
-        if self.cmgateway != None:
-            self.send('gateway {}'.format(self.cmgateway) )
+        if cmtsGateway != None:
+            self.send('gateway {}'.format(cmtsGateway) )
             self.readuntil('(config)#')
         self.send('super')
         self.readuntilII('Password:')
@@ -191,11 +182,11 @@ class ConfigCcmtsIp(UpgradeOlt):
             if '#' in s:
                 continue
             if '0' == s:
-                self.parent.log('{}config success!cmIp:{}'.format(key,cmIp), cmts=key)
+                self.parent.log('{}config success!cmtsIp:{}'.format(key,cmtsIp), cmts=key)
                 return True, ''
             else:
-                self.parent.log('{}ftp server can not connect.cmIp:{}'.format(key,cmIp), cmts=key)
-                return False, '{}ftp server can not connect.cmIp:{}'.format(key,cmIp)
+                self.parent.log('{}ftp server can not connect.cmtsIp:{}'.format(key,cmtsIp), cmts=key)
+                return False, '{}ftp server can not connect.cmtsIp:{}'.format(key,cmtsIp)
 
     def cmdLog(self, str):
         self.parent.cmdLog(str)
