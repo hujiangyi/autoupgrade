@@ -1,9 +1,10 @@
+# -*- coding: utf-8 -*-
 from threading import *
 import xlrd
 from Tkinter import *
 from tkFileDialog import *
 from tkMessageBox import *
-from UpgradeOlt.tools.UpgradeOltFtpClient import *
+from tools.UpgradeOltFtpClient import *
 from xlutils.copy import copy
 
 root = Tk()

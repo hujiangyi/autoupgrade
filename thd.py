@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from threading import *
 import time
 from Tkinter import *

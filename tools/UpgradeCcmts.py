@@ -584,6 +584,7 @@ class UpgradeCcmts(UpgradeOlt):
                             self.readuntil('(config-if-ccmts-{})#'.format(key))
                             self.send('reset')
                             self.readuntil('(config-if-ccmts-{})#'.format(key))
+                            self.sleepT(1)
         else :
             resetCmts = []
             resetThreads = []

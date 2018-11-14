@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from threading import *
 from telnetlib import *
 from IPy import *

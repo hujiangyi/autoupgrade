@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from ftplib import FTP
 import datetime
 import os
