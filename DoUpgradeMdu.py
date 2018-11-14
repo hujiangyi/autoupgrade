@@ -1,9 +1,4 @@
-#! /usr/bin/env python
-# -*- coding: utf-8 -*-
-# vim:fenc=utf-8
-#
-# Copyright Â© 2014 jay <hujiangyi@dvt.dvt.com>
-#
+#encoding:gbk
 from threading import *
 import datetime
 import os
@@ -15,7 +10,6 @@ from tools.UpgradeCcmts import *
 from xlutils.copy import copy
 from utils.ListView import *
 from utils.IpMaker import *
-
 
 def selectOltExcelPath():
     path_ = askopenfilename()
@@ -70,11 +64,11 @@ def closeDialog():
     except ValueError, e:
         msg = str(e)
         if "IP Address format was invalid" in msg:
-            print "Excelä¸­IPåœ°å€å¡«å†™é”™è¯¯ï¼Œå¯èƒ½æ˜¯å¤šäº†ç©ºè¡Œæˆ–è€…å¤šäº†ç©ºæ ¼ï¼Œè¯·ä»”ç»†æ£€æŸ¥"
+            print "ExcelÖĞIPµØÖ·ÌîĞ´´íÎó£¬¿ÉÄÜÊÇ¶àÁË¿ÕĞĞ»òÕß¶àÁË¿Õ¸ñ£¬Çë×ĞÏ¸¼ì²é"
         elif "has invalid prefix length" in msg:
-            print "å†æˆ–è€…ç½‘æ®µåœ°å€å¡«å†™æˆäº†å…·ä½“çš„IPåœ°å€ï¼Œè¯·ä»”ç»†æ£€æŸ¥"
+            print "ÔÙ»òÕßÍø¶ÎµØÖ·ÌîĞ´³ÉÁË¾ßÌåµÄIPµØÖ·£¬Çë×ĞÏ¸¼ì²é"
         else :
-            print "å‚æ•°å¡«å†™é”™è¯¯ï¼Œè¯·ä»”ç»†æ£€æŸ¥å„é¡¹å‚æ•°è®¾ç½®ï¼ŒåŒ…æ‹¬Excel"
+            print "²ÎÊıÌîĞ´´íÎó£¬Çë×ĞÏ¸¼ì²é¸÷Ïî²ÎÊıÉèÖÃ£¬°üÀ¨Excel"
         print 'traceback.format_exc():\n%s' % traceback.format_exc()
 
 def doUpgradeMud():
@@ -86,10 +80,10 @@ def doUpgradeMud():
     cols = [{"key":"ip","width":100,"text":"IP"},
             {"key":"result","width":350,"text":"Result"},
             {"key":"clearResult","width":300,"text":"ClearResult"},
-            {"key":"isAAA","width":100,"text":"æ˜¯å¦å¼€å¯AAA"},
-            {"key":"userName","width":100,"text":"è´¦å·"},
-            {"key":"password","width":100,"text":"å¯†ç "},
-            {"key":"enablePassword","width":100,"text":"enableå¯†ç "}]
+            {"key":"isAAA","width":100,"text":"ÊÇ·ñ¿ªÆôAAA"},
+            {"key":"userName","width":100,"text":"ÕËºÅ"},
+            {"key":"password","width":100,"text":"ÃÜÂë"},
+            {"key":"enablePassword","width":100,"text":"enableÃÜÂë"}]
     listView.initColumn(cols)
 
     excel = oltExcelPath.get()
