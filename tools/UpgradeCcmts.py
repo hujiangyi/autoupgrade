@@ -94,7 +94,7 @@ class UpgradeCcmts(UpgradeOlt):
                 self.closeChannelList[key] = []
                 self.send('interface ccmts {}'.format(key))
                 self.readuntil('(config-if-ccmts-{})#'.format(key))
-                self.send('show running-config | include no cable upstream .*shutdown')
+                self.send('show running-config verbose | include no cable upstream .*shutdown')
                 re = self.readuntil('(config-if-ccmts-{})#'.format(key))
                 lines = re.split('\r\n')
                 for line in lines:
