@@ -17,10 +17,13 @@ encode = 'UTF-8'
 def log(msg):
     print msg.decode('UTF-8').encode(encode)
 
-def getConfig(section,key):
-    config = ConfigParser.ConfigParser()
-    config.read('config.conf')
-    return config.get(section, key)
+def getConfig(section,key,default):
+    try:
+        config = ConfigParser.ConfigParser()
+        config.read('config.conf')
+        return config.get(section, key)
+    except BaseException, msg:
+        return default
 
 def selectOltExcelPath():
     path_ = askopenfilename()
@@ -90,6 +93,7 @@ def doUpgradeMud():
     cols = [{"key":"ip","width":100,"text":"IP"},
             {"key":"result","width":350,"text":"Result"},
             {"key":"clearResult","width":300,"text":"ClearResult"},
+            {"key":"faildReason","width":100,"text":"升级失败原因"},
             {"key":"isAAA","width":100,"text":"是否开启AAA"},
             {"key":"userName","width":100,"text":"账号"},
             {"key":"password","width":100,"text":"密码"},
@@ -152,7 +156,16 @@ def doUpgradeMud():
     wb.save(resultExcel)
 
 ##########################################arg dialog######################################################
-encode = getConfig("system","encode")
+encode = getConfig("system","encode","UTF-8")
+cvlanConfig = getConfig("default","cvlan","500")
+gatewayConfig = getConfig("default","gateway","50")
+ftpServerConfig = getConfig("default","ftpServer","172.17.2.2")
+ftpUserConfig = getConfig("default","ftpUser","c")
+ftpPwdConfig = getConfig("default","ftpPwd","c")
+binNameConfig = getConfig("default","binName","c.bin")
+threadNumConfig = getConfig("default","threadNum","10")
+targetVersionConfig = getConfig("default","targetVersion","")
+cmvlanConfig = getConfig("default","cmvlan","1")
 root = Tk()
 oltExcelPath = StringVar()
 cvlanStr = StringVar()
@@ -164,15 +177,15 @@ imageFileNameStr = StringVar()
 threadNumStr = StringVar()
 versionStr = StringVar()
 cmvlanIV = IntVar()
-cvlanStr.set('500')
-gatewayStr.set('50')
-ftpServerStr.set('10.30.30.242')
-ftpUserNameStr.set('c')
-ftpPasswordStr.set('c')
-imageFileNameStr.set('c.bin')
-threadNumStr.set('10')
-versionStr.set('')
-cmvlanIV.set(1)
+cvlanStr.set(int(cvlanConfig))
+gatewayStr.set(gatewayConfig)
+ftpServerStr.set(ftpServerConfig)
+ftpUserNameStr.set(ftpUserConfig)
+ftpPasswordStr.set(ftpPwdConfig)
+imageFileNameStr.set(binNameConfig)
+threadNumStr.set(threadNumConfig)
+versionStr.set(targetVersionConfig)
+cmvlanIV.set(int(cmvlanConfig))
 
 row = 0
 row = rowView(row,'OltExcel',oltExcelPath,fun=selectOltExcelPath)

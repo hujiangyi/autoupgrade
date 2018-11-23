@@ -5,6 +5,7 @@ from UpgradeOlt import UpgradeOlt
 from ConfigCcmtsIp import ConfigCcmtsIp
 from ResetCcmts import ResetCcmts
 from IPy import *
+import json
 
 
 class UpgradeCcmts(UpgradeOlt):
@@ -119,15 +120,26 @@ class UpgradeCcmts(UpgradeOlt):
                 self.closeChannelList[key] = []
                 self.send('interface ccmts {}'.format(key))
                 self.readuntil('(config-if-ccmts-{})#'.format(key))
+                channelConfig = self.readChannelConfig(self.host)
+                if channelConfig != None :
+                    if channelConfig.has_key(key):
+                        closeChannelCmdList = channelConfig[key]
+                        for line in closeChannelCmdList:
+                            self.closeChannelList[key].append(line)
                 self.send('show running-config verbose | include no cable upstream .*shutdown')
                 re = self.readuntil('(config-if-ccmts-{})#'.format(key))
                 lines = re.split('\r\n')
                 for line in lines:
-                    if 'Filtering...' in line or '#' in line or 'show running-config | include no cable upstream .*shutdown' in line:
+                    if 'Filtering...' in line or '#' in line or 'show running-config verbose | include no cable upstream .*shutdown' in line:
                         continue
                     else :
                         self.log('ccmts{} open channel cmd({}) append'.format(key,line))
-                        self.closeChannelList[key].append(line)
+                        if self.closeChannelList.has_key(key):
+                            channelConfig = self.closeChannelList[key]
+                            if not channelConfig.__contains__(line):
+                                self.closeChannelList[key].append(line)
+                        else:
+                            self.closeChannelList[key].append(line)
                 self.send('cable upstream 1-4 shutdown')
                 self.readuntil('(config-if-ccmts-{})#'.format(key))
                 #用服提出只关闭上行就可以了，下行关闭后如果是eqam信道重新开启很麻烦，与吕海艇沟通确认对方案没有影响
@@ -135,6 +147,14 @@ class UpgradeCcmts(UpgradeOlt):
                 # self.readuntil('(config-if-ccmts-{})#'.format(key))
                 self.send('exit')
                 self.readuntil('(config)#')
+        self.writeChannelConfig(self.host,self.closeChannelList)
+    def writeChannelConfig(self,host,channelConfig):
+        json.dump(channelConfig, open("./log/{}ChannelConfig.json".format(host), "w"))
+    def readChannelConfig(self,host):
+        try:
+            return json.load(open("./log/{}ChannelConfig.json".format(host), "r"))
+        except Exception:
+            return None
     def openChannel(self):
         self.log('start openChannel')
         self.send('end')
@@ -302,6 +322,7 @@ class UpgradeCcmts(UpgradeOlt):
             if '#' in line:
                 continue
             if 'Download image failed.'in line:
+                self.listView.setData(key,'faildReason','Ftp不可达')
                 return  True,line
         return False,re
     ####################################################CC upgrade######################################################
@@ -440,6 +461,10 @@ class UpgradeCcmts(UpgradeOlt):
             if '#' in line:
                 continue
             if 'Download image failed.'in line:
+                self.listView.setData("{}_{}".format(self.host,key),'faildReason','Ftp不可达')
+                return  False,True,line
+            if 'Bad packet!'in line or 'File error.' in line:
+                self.listView.setData("{}_{}".format(self.host,key),'faildReason','镜像包有问题')
                 return  False,True,line
             if 'Progress   :'in line:
                 if '%' not in line:

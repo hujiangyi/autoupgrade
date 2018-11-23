@@ -89,7 +89,6 @@ class SshVty:
             delay = 0.0
             while delay <= timeout:
                 state,str = self.read()
-                print str
                 if not state :
                     raise Exception("read ssh channel error!")
                 if str is not None:
