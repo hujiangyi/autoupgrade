@@ -1,5 +1,5 @@
-#encoding:gbk
-from threading import *
+#encoding:utf-8
+import ConfigParser
 import datetime
 import os
 import xlrd
@@ -10,6 +10,17 @@ from tools.UpgradeCcmts import *
 from xlutils.copy import copy
 from utils.ListView import *
 from utils.IpMaker import *
+import sys
+reload(sys)
+sys.setdefaultencoding('UTF-8')
+encode = 'UTF-8'
+def log(msg):
+    print msg.decode('UTF-8').encode(encode)
+
+def getConfig(section,key):
+    config = ConfigParser.ConfigParser()
+    config.read('config.conf')
+    return config.get(section, key)
 
 def selectOltExcelPath():
     path_ = askopenfilename()
@@ -28,7 +39,6 @@ def rowViewCheckbox(row,label,textvariable):
     Checkbutton(root, text=label, variable=textvariable).grid(row=row,column=0, sticky=W)
     row += 1
     return row
-
 
 def closeDialog():
     if oltExcelPath == None or oltExcelPath.get() == '':
@@ -64,12 +74,12 @@ def closeDialog():
     except ValueError, e:
         msg = str(e)
         if "IP Address format was invalid" in msg:
-            print "ExcelÖĞIPµØÖ·ÌîĞ´´íÎó£¬¿ÉÄÜÊÇ¶àÁË¿ÕĞĞ»òÕß¶àÁË¿Õ¸ñ£¬Çë×ĞÏ¸¼ì²é"
+            log("Excelä¸­IPåœ°å€å¡«å†™é”™è¯¯ï¼Œå¯èƒ½æ˜¯å¤šäº†ç©ºè¡Œæˆ–è€…å¤šäº†ç©ºæ ¼ï¼Œè¯·ä»”ç»†æ£€æŸ¥")
         elif "has invalid prefix length" in msg:
-            print "ÔÙ»òÕßÍø¶ÎµØÖ·ÌîĞ´³ÉÁË¾ßÌåµÄIPµØÖ·£¬Çë×ĞÏ¸¼ì²é"
+            log("å†æˆ–è€…ç½‘æ®µåœ°å€å¡«å†™æˆäº†å…·ä½“çš„IPåœ°å€ï¼Œè¯·ä»”ç»†æ£€æŸ¥")
         else :
-            print "²ÎÊıÌîĞ´´íÎó£¬Çë×ĞÏ¸¼ì²é¸÷Ïî²ÎÊıÉèÖÃ£¬°üÀ¨Excel"
-        print 'traceback.format_exc():\n%s' % traceback.format_exc()
+            log("å‚æ•°å¡«å†™é”™è¯¯ï¼Œè¯·ä»”ç»†æ£€æŸ¥å„é¡¹å‚æ•°è®¾ç½®ï¼ŒåŒ…æ‹¬Excel")
+        log('traceback.format_exc():\n%s' % traceback.format_exc())
 
 def doUpgradeMud():
     resultDialog = Tk()
@@ -80,10 +90,10 @@ def doUpgradeMud():
     cols = [{"key":"ip","width":100,"text":"IP"},
             {"key":"result","width":350,"text":"Result"},
             {"key":"clearResult","width":300,"text":"ClearResult"},
-            {"key":"isAAA","width":100,"text":"ÊÇ·ñ¿ªÆôAAA"},
-            {"key":"userName","width":100,"text":"ÕËºÅ"},
-            {"key":"password","width":100,"text":"ÃÜÂë"},
-            {"key":"enablePassword","width":100,"text":"enableÃÜÂë"}]
+            {"key":"isAAA","width":100,"text":"æ˜¯å¦å¼€å¯AAA"},
+            {"key":"userName","width":100,"text":"è´¦å·"},
+            {"key":"password","width":100,"text":"å¯†ç "},
+            {"key":"enablePassword","width":100,"text":"enableå¯†ç "}]
     listView.initColumn(cols)
 
     excel = oltExcelPath.get()
@@ -106,7 +116,7 @@ def doUpgradeMud():
     wb = copy(rb)
     sheetCount = len(rb.sheets())
     for si in range(sheetCount):
-        print '%%%%%%%%%%%%%%%%%%%%%%%%%%' + `si` + '%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%'
+        log('%%%%%%%%%%%%%%%%%%%%%%%%%%' + `si` + '%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%')
         sheetName = `si`
         sheetR = rb.sheet_by_index(si)
         sheetW = wb.get_sheet(si)
@@ -117,8 +127,10 @@ def doUpgradeMud():
         wi += 1
         for i in range(2, nrows):
             ip = sheetR.cell(i, 0).value
-            isSsh = "æ˜¯" == sheetR.cell(i, 1).value
-            isAAA = "æ˜¯" == sheetR.cell(i, 2).value
+            isSshStr = sheetR.cell(i, 1).value
+            isAAAStr = sheetR.cell(i, 2).value
+            isSsh = isSshStr == 'æ˜¯'
+            isAAA = isAAAStr == 'æ˜¯'
             username = sheetR.cell(i, 3).value
             password = sheetR.cell(i, 4).value
             enablePassword = sheetR.cell(i, 5).value
@@ -140,6 +152,7 @@ def doUpgradeMud():
     wb.save(resultExcel)
 
 ##########################################arg dialog######################################################
+encode = getConfig("system","encode")
 root = Tk()
 oltExcelPath = StringVar()
 cvlanStr = StringVar()

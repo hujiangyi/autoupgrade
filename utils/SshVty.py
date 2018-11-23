@@ -56,7 +56,6 @@ class SshVty:
     def send(self, cmd):
         self.sleepT(1)
         cmd = str('{}\r'.format(cmd))
-        self.app.log("send cmd{}".format(cmd))
         try:
             self.session.send(cmd)
         except Exception:
@@ -90,6 +89,7 @@ class SshVty:
             delay = 0.0
             while delay <= timeout:
                 state,str = self.read()
+                print str
                 if not state :
                     raise Exception("read ssh channel error!")
                 if str is not None:
@@ -97,7 +97,6 @@ class SshVty:
                     time.sleep(1)
                     if '--More--' in str:
                         self.sendII(' ')
-                    self.app.cmdLog(str)
                     if waitstr in tmp:
                         return tmp
                 delay += 1
@@ -111,7 +110,6 @@ class SshVty:
                     tmp += str
                     if '--More--' in str:
                         self.sendII(' ')
-                    self.app.cmdLog(str)
                     if waitstr in tmp:
                         return tmp
                 else :
@@ -130,26 +128,25 @@ class SshVty:
                     time.sleep(1)
                     if '--More--' in str:
                         self.sendII(' ')
-                    self.app.cmdLog(str)
                     for waitstr in waitstrs:
                         if waitstr in tmp:
                             return tmp
                 delay += 1
             raise Exception("wait str timeout")
         else:
-            state,str = self.read()
-            if not state :
-                raise Exception("read ssh channel error!")
-            if str is not None:
-                tmp += str
-                if '--More--' in str:
-                    self.sendII(' ')
-                self.app.cmdLog(str)
-                for waitstr in waitstrs:
-                    if waitstr in tmp:
-                        return tmp
-            else :
-                self.sleepT(1)
+            while True:
+                state,str = self.read()
+                if not state :
+                    raise Exception("read ssh channel error!")
+                if str is not None:
+                    tmp += str
+                    if '--More--' in str:
+                        self.sendII(' ')
+                    for waitstr in waitstrs:
+                        if waitstr in tmp:
+                            return tmp
+                else :
+                    self.sleepT(1)
 
     def readuntilII(self, waitstr='xxx', timeout=0):
         tmp = ""
@@ -164,7 +161,6 @@ class SshVty:
                     time.sleep(1)
                     if '--More--' in str:
                         self.sendII(' ')
-                    self.app.cmdLog(str)
                     if waitstr in tmp:
                         return tmp
                 delay += 1
@@ -178,7 +174,6 @@ class SshVty:
                     tmp += str
                     if '--More--' in str:
                         self.sendII(' ')
-                    self.app.cmdLog(str)
                     if waitstr in tmp:
                         return tmp
                 else :

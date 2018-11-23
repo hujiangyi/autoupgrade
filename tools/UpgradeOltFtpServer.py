@@ -1,4 +1,4 @@
-#encoding:gbk
+#encoding:utf-8
 from UpgradeOlt import UpgradeOlt
 
 class UpgradeOltFtpServer(UpgradeOlt):

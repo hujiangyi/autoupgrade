@@ -1,4 +1,4 @@
-#encoding:gbk
+#encoding:utf-8
 from UpgradeOlt import UpgradeOlt
 
 
@@ -7,7 +7,7 @@ class PingTest(UpgradeOlt) :
         row={"identifyKey":"ip",
              "ip":self.host,
              "result":"start",
-             "isAAA":self.isAAA == '1',
+             "isAAA":self.isAAA,
              "userName":self.userName,
              "password":self.password,
              "enablePassword":self.enablePassword}

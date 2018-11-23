@@ -1,4 +1,4 @@
-#encoding:gbk
+#encoding:utf-8
 import traceback
 import time
 
@@ -21,7 +21,6 @@ class ConfigCcmtsIp(UpgradeOlt):
         except BaseException, msg:
             self.state, self.msg = False,msg
             self.parent.log('traceback.format_exc():\n%s' % traceback.format_exc())
-            print 'traceback.format_exc():\n%s' % traceback.format_exc()
 
     def connect(self,parent,host,isAAA,userName,password,enablePassword,vlan,gateway,ftpServer,slot,port,device,slotType,cmvlan,logPath,mac,ipMaker,isSsh=False):
         print 'connect to host ' + host
@@ -50,7 +49,7 @@ class ConfigCcmtsIp(UpgradeOlt):
                "ip": key,
                "result": "start",
                "clearResult": "",
-               "isAAA": self.isAAA == '1',
+               "isAAA": self.isAAA,
                "userName": self.userName,
                "password": self.password,
                "enablePassword": self.enablePassword}
@@ -107,9 +106,9 @@ class ConfigCcmtsIp(UpgradeOlt):
         self.parent.log('cmts ip is {}'.format(cmtsIp), cmts=key)
         state,msg = self.configCmtsIp(cmtsIp,cmtsMask,cmtsGateway,ftpServer,slot,port,device)
         while not state:
-            cmtsIp = self.parent.nextIp()
+            cmtsIp = self.ipMaker.nextIp()
             if cmtsIp == cmtsGateway :
-                cmtsIp = self.parent.nextIp()
+                cmtsIp = self.ipMaker.nextIp()
             state, msg = self.configCmtsIp(cmtsIp,cmtsMask,cmtsGateway, ftpServer,slot,port,device)
         self.send('exit')
         self.readuntil('>')

@@ -1,4 +1,4 @@
-#encoding:gbk
+#encoding:utf-8
 from ftplib import FTP
 import datetime
 import os
@@ -11,7 +11,7 @@ class UpgradeOltFtpClient(UpgradeOlt):
         row={"identifyKey":"ip",
              "ip":self.host,
              "result":"start",
-             "isAAA":self.isAAA == '1',
+             "isAAA":self.isAAA,
              "userName":self.userName,
              "password":self.password,
              "enablePassword":self.enablePassword}
@@ -60,13 +60,13 @@ class UpgradeOltFtpClient(UpgradeOlt):
                 self.addRetry(args,step=self.step)
             self.log(`msg`)
             self.writeResult(`msg`)
-            print 'traceback.format_exc():\n%s' % traceback.format_exc()
+            self.log('traceback.format_exc():\n%s' % traceback.format_exc())
     def doCollectData(self):
         try:
             self.collectData('after')
         except BaseException, msg:
             self.log(`msg`)
-            print 'traceback.format_exc():\n%s' % traceback.format_exc()
+            self.log('traceback.format_exc():\n%s' % traceback.format_exc())
 
     def connect(self,host,isAAA,userName,password,enablePassword,appPath,logPath,sheetW,excelRow,listView,downloadFlie=True,upgradeBootrom = True,writeFile=True,reboot=True):
         print 'connect to host ' + host
@@ -88,7 +88,7 @@ class UpgradeOltFtpClient(UpgradeOlt):
             print msg
             msg = 'telnet connecting failed'
             self.writeResult(msg)
-            print 'traceback.format_exc():\n%s' % traceback.format_exc()
+            self.log('traceback.format_exc():\n%s' % traceback.format_exc())
 
     def openFtpServer(self):
         self.log('openFtpServer')

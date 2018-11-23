@@ -1,4 +1,4 @@
-#encoding:gbk
+#encoding:utf-8
 import traceback
 import time
 
@@ -10,7 +10,7 @@ class ResetCcmts(UpgradeOlt):
     def run(self):
         self.initLog(self.logPath,self.host)
         self.session2 = ResetCcmtsDol()
-        self.session2.connect(self,self.host, self.isAAA, self.userName, self.password, self.enablePassword,self.gateway,self.slot,self.port,self.device,self.logPath,self.mac)
+        self.session2.connect(self,self.host, self.isAAA, self.userName, self.password, self.enablePassword,self.gateway,self.slot,self.port,self.device,self.logPath,self.mac,isSsh=self.isSsh)
         self.session2.run()
         self.doConnect()
         self.doConfig()
@@ -26,9 +26,8 @@ class ResetCcmts(UpgradeOlt):
         except BaseException, msg:
             self.state, self.msg = False,msg
             self.parent.log('traceback.format_exc():\n%s' % traceback.format_exc())
-            print 'traceback.format_exc():\n%s' % traceback.format_exc()
 
-    def connect(self,parent,host,isAAA,userName,password,enablePassword,gateway,slot,port,device,logPath,mac):
+    def connect(self,parent,host,isAAA,userName,password,enablePassword,gateway,slot,port,device,logPath,mac,isSsh=False):
         print 'connect to host ' + host
         self.parent = parent
         self.gateway = gateway
@@ -36,7 +35,7 @@ class ResetCcmts(UpgradeOlt):
         self.port = port
         self.device = device
         self.mac = mac
-        self.setArg(host,isAAA,userName,password,enablePassword)
+        self.setArg(isSsh,host,isAAA,userName,password,enablePassword)
         self.logPath = logPath
 
     def getResetResult(self):

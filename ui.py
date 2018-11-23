@@ -1,4 +1,4 @@
-#encoding:gbk
+#encoding:utf-8
 from Tkinter import *
 import ttk
 from utils.ListView import *

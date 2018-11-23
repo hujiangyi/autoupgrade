@@ -1,4 +1,4 @@
-#encoding:gbk
+#encoding:utf-8
 import traceback
 
 from UpgradeOlt import *
@@ -14,7 +14,7 @@ class ConfigCcmtsUplink(UpgradeOlt):
         except BaseException, msg:
             self.parent.log(`msg`)
             self.state, self.msg = False,msg
-            print 'traceback.format_exc():\n%s' % traceback.format_exc()
+            self.log('traceback.format_exc():\n%s' % traceback.format_exc())
 
 
     def connect(self,parent,host,isAAA,userName,password,enablePassword,vlan,gateway,ftpServer,ftpUsername,ftpPassword,configFile,slot,port,device,ipMaker):
@@ -43,7 +43,7 @@ class ConfigCcmtsUplink(UpgradeOlt):
                "ip": slot + '/' + port + '/' + device,
                "result": "start",
                "clearResult": "",
-               "isAAA": self.isAAA == '1',
+               "isAAA": self.isAAA,
                "userName": self.userName,
                "password": self.password,
                "enablePassword": self.enablePassword}
@@ -83,9 +83,9 @@ class ConfigCcmtsUplink(UpgradeOlt):
         self.parent.log('cmts ip is {}'.format(cmtsIp), cmts=key)
         state, msg = self.configCmtsIp(cmtsIp, cmtsMask, cmtsGateway, ftpServer, slot, port, device)
         while not state:
-            cmtsIp = self.parent.nextIp()
+            cmtsIp = self.ipMaker.nextIp()
             if cmtsIp == cmtsGateway:
-                cmtsIp = self.parent.nextIp()
+                cmtsIp = self.ipMaker.nextIp()
             state, msg = self.configCmtsIp(cmtsIp, cmtsMask, cmtsGateway, ftpServer, slot, port, device)
         self.send('exit')
         self.readuntil('>')

@@ -1,4 +1,4 @@
-#encoding:gbk
+#encoding:utf-8
 import traceback
 import time
 import datetime
@@ -20,10 +20,9 @@ class ResetCcmtsDol(UpgradeOlt):
             return self.reset3219(self.gateway,self.slot,self.port,self.device)
         except BaseException, msg:
             self.parent.log('traceback.format_exc():\n%s' % traceback.format_exc())
-            print 'traceback.format_exc():\n%s' % traceback.format_exc()
             return False,`msg`
 
-    def connect(self,parent,host,isAAA,userName,password,enablePassword,gateway,slot,port,device,logPath,mac):
+    def connect(self,parent,host,isAAA,userName,password,enablePassword,gateway,slot,port,device,logPath,mac,isSsh=False):
         print 'connect to host ' + host
         self.parent = parent
         self.gateway = gateway
@@ -31,7 +30,7 @@ class ResetCcmtsDol(UpgradeOlt):
         self.port = port
         self.device = device
         self.mac = mac
-        self.setArg(host,isAAA,userName,password,enablePassword)
+        self.setArg(isSsh,host,isAAA,userName,password,enablePassword)
         self.logPath = logPath
 
     def getResetResult(self):

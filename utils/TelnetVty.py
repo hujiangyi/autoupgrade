@@ -140,7 +140,7 @@ class TelnetVty:
     def needLogin(self, str):
         try:
             #self.app.log('CLI timeout need login.')
-            if self.isAAA == '1':
+            if self.isAAA:
                 if 'sername:' in str :
                     self.send('')
                     re = self.readuntilII(waitstr='sername:', timeout=30)

@@ -1,4 +1,4 @@
-#encoding:gbk
+#encoding:utf-8
 import traceback
 import time
 from UpgradeOlt import UpgradeOlt
@@ -13,7 +13,7 @@ class UpgradeCcmts(UpgradeOlt):
              "ip":self.host,
              "result":"start",
              "clearResult":"",
-             "isAAA":self.isAAA == '1',
+             "isAAA":self.isAAA,
              "userName":self.userName,
              "password":self.password,
              "enablePassword":self.enablePassword}
@@ -22,14 +22,14 @@ class UpgradeCcmts(UpgradeOlt):
         self.doUpgrade()
     def doUpgrade(self):
         try:
-            # lvhaiting(ÂÀº£Í§)
-            # ÒòÎªÕâÑù£¬Èç¹ûÄãÃ»ÔÚoltÉÏ¹ØĞÅµÀ£¬µÚÒ»´ÎccÖØÆôºó£¬»áÓĞcm´óÁ¿ÉÏÏßµÄ¹ı³Ì
-            # lvhaiting(ÂÀº£Í§)
-            # ËùÒÔ»¹²»ÈçÖ±½ÓÔÚoltÉÏ¹ØĞÅµÀ¡£ ÕâÑùÄãµÚ¶ş´ÎµÄÊ±ºòÒ²²»ÓÃµÇÂ½ccÈ¥¹ØĞÅµÀÁË
-            # lvhaiting(ÂÀº£Í§)
-            # cm¶àµÄ»°£¬olt¿ÉÄÜ»á¿¸²»×¡
-            # lvhaiting(ÂÀº£Í§)
-            # »á³öÏÖÒì³£
+            # lvhaiting(å•æµ·è‰‡)
+            # å› ä¸ºè¿™æ ·ï¼Œå¦‚æœä½ æ²¡åœ¨oltä¸Šå…³ä¿¡é“ï¼Œç¬¬ä¸€æ¬¡ccé‡å¯åï¼Œä¼šæœ‰cmå¤§é‡ä¸Šçº¿çš„è¿‡ç¨‹
+            # lvhaiting(å•æµ·è‰‡)
+            # æ‰€ä»¥è¿˜ä¸å¦‚ç›´æ¥åœ¨oltä¸Šå…³ä¿¡é“ã€‚ è¿™æ ·ä½ ç¬¬äºŒæ¬¡çš„æ—¶å€™ä¹Ÿä¸ç”¨ç™»é™†ccå»å…³ä¿¡é“äº†
+            # lvhaiting(å•æµ·è‰‡)
+            # cmå¤šçš„è¯ï¼Œoltå¯èƒ½ä¼šæ‰›ä¸ä½
+            # lvhaiting(å•æµ·è‰‡)
+            # ä¼šå‡ºç°å¼‚å¸¸
             if self.ipMaker.ipMakerType == 'CMIP':
                 self.recordCmIp()
             self.closeChannel()
@@ -46,7 +46,7 @@ class UpgradeCcmts(UpgradeOlt):
         except BaseException, msg:
             self.log(`msg`)
             self.writeResult(`msg`)
-            print 'traceback.format_exc():\n%s' % traceback.format_exc()
+            self.log('traceback.format_exc():\n%s' % traceback.format_exc())
         finally:
             self.openChannel()
             self.log('upgrade success')
@@ -55,7 +55,7 @@ class UpgradeCcmts(UpgradeOlt):
             self.collectData('after')
         except BaseException, msg:
             self.log(`msg`)
-            print 'traceback.format_exc():\n%s' % traceback.format_exc()
+            self.log('traceback.format_exc():\n%s' % traceback.format_exc())
 
     def connect(self,host,isAAA,userName,password,enablePassword,logPath,sheetW,excelRow,vlan,gateway,ftpServer,ftpUserName,ftpPassword,imageFileName,threadNum,version,cmvlan,listView,ipMaker,isSsh=False):
         print 'connect to host ' + host
@@ -130,7 +130,7 @@ class UpgradeCcmts(UpgradeOlt):
                         self.closeChannelList[key].append(line)
                 self.send('cable upstream 1-4 shutdown')
                 self.readuntil('(config-if-ccmts-{})#'.format(key))
-                #ÓÃ·şÌá³öÖ»¹Ø±ÕÉÏĞĞ¾Í¿ÉÒÔÁË£¬ÏÂĞĞ¹Ø±ÕºóÈç¹ûÊÇeqamĞÅµÀÖØĞÂ¿ªÆôºÜÂé·³£¬ÓëÂÀº£Í§¹µÍ¨È·ÈÏ¶Ô·½°¸Ã»ÓĞÓ°Ïì
+                #ç”¨æœæå‡ºåªå…³é—­ä¸Šè¡Œå°±å¯ä»¥äº†ï¼Œä¸‹è¡Œå…³é—­åå¦‚æœæ˜¯eqamä¿¡é“é‡æ–°å¼€å¯å¾ˆéº»çƒ¦ï¼Œä¸å•æµ·è‰‡æ²Ÿé€šç¡®è®¤å¯¹æ–¹æ¡ˆæ²¡æœ‰å½±å“
                 # self.send('cable downstream 1-16 shutdown')
                 # self.readuntil('(config-if-ccmts-{})#'.format(key))
                 self.send('exit')
@@ -207,7 +207,7 @@ class UpgradeCcmts(UpgradeOlt):
                                    "ip": slot + '/' + port + '/' + device,
                                    "result": "start",
                                    "clearResult": "",
-                                   "isAAA": self.isAAA == '1',
+                                   "isAAA": self.isAAA,
                                    "userName": self.userName,
                                    "password": self.password,
                                    "enablePassword": self.enablePassword}
@@ -243,7 +243,7 @@ class UpgradeCcmts(UpgradeOlt):
             self.send('configure terminal')
             self.readuntil('(config)#')
 
-            self.log('µÚÒ»ÂÖÏÂ·¢Éı¼¶Ö¸Áî')
+            self.log('ç¬¬ä¸€è½®ä¸‹å‘å‡çº§æŒ‡ä»¤')
             for slot, portMap in self.allCmts.items():
                 for port, deviceList in portMap.items():
                     for device in deviceList:
@@ -251,12 +251,12 @@ class UpgradeCcmts(UpgradeOlt):
                         nversion = self.allVersion[key]
                         if nversion != None and nversion != 'no version' and nversion != '' and nversion != self.version:
                             key = '{}/{}/{}'.format(slot, port, device)
-                            self.log('¿ªÊ¼Éı¼¶{}'.format(key))
+                            self.log('å¼€å§‹å‡çº§{}'.format(key))
                             self.send('upgrade mdu image ftp {} {} {} {} interface {}'.format(ftpServer ,ftpUsername,ftpPassword,imageFileName,key ))
                             self.readuntil('(config)#')
                             self.sleepT(3)
 
-            self.log('µÚ¶şÂÖÏÂ·¢Éı¼¶Ö¸Áî')
+            self.log('ç¬¬äºŒè½®ä¸‹å‘å‡çº§æŒ‡ä»¤')
             for slot, portMap in self.allCmts.items():
                 for port, deviceList in portMap.items():
                     for device in deviceList:
@@ -266,12 +266,12 @@ class UpgradeCcmts(UpgradeOlt):
                             key = '{}/{}/{}'.format(slot, port, device)
                             state, result = self.checkCmtsIsDownloadFail(key)
                             if state:
-                                self.log('{}µÚÒ»ÂÖÏÂ·¢Éı¼¶Ö¸ÁîÊ§°Ü£¬ÖØĞÂÏÂ·¢Ò»´Î'.format(key))
+                                self.log('{}ç¬¬ä¸€è½®ä¸‹å‘å‡çº§æŒ‡ä»¤å¤±è´¥ï¼Œé‡æ–°ä¸‹å‘ä¸€æ¬¡'.format(key))
                                 self.send('upgrade mdu image ftp {} {} {} {} interface {}'.format(ftpServer ,ftpUsername,ftpPassword,imageFileName,key ))
                                 self.readuntil('(config)#')
                                 self.sleepT(3)
 
-            self.log('µÚÈıÂÖÏÂ·¢Éı¼¶Ö¸Áî')
+            self.log('ç¬¬ä¸‰è½®ä¸‹å‘å‡çº§æŒ‡ä»¤')
             for slot, portMap in self.allCmts.items():
                 for port, deviceList in portMap.items():
                     for device in deviceList:
@@ -280,7 +280,7 @@ class UpgradeCcmts(UpgradeOlt):
                         if nversion != None and nversion != 'no version' and nversion != '' and nversion != self.version:
                             state, result = self.checkCmtsIsDownloadFail(key)
                             if state:
-                                self.log('{}µÚ¶şÂÖÏÂ·¢Éı¼¶Ö¸ÁîÊ§°Ü£¬ÖØĞÂÏÂ·¢Ò»´Î'.format(key))
+                                self.log('{}ç¬¬äºŒè½®ä¸‹å‘å‡çº§æŒ‡ä»¤å¤±è´¥ï¼Œé‡æ–°ä¸‹å‘ä¸€æ¬¡'.format(key))
                                 self.send('upgrade mdu image ftp {} {} {} {} interface {}'.format(ftpServer ,ftpUsername,ftpPassword,imageFileName,key ))
                                 self.readuntil('(config)#')
                                 self.sleepT(3)
@@ -639,7 +639,7 @@ class UpgradeCcmts(UpgradeOlt):
                                     if len(resetThreads) < self.threadNum / 2:
                                         resetCcmts = ResetCcmts()
                                         resetCcmts.connect(self, self.host, self.isAAA, self.userName, self.password,
-                                                              self.enablePassword, slotGateway, slot, port, device,  self.logPath, mac)
+                                                              self.enablePassword, slotGateway, slot, port, device,  self.logPath, mac,isSsh=self.isSsh)
                                         resetCcmts.setDaemon(True)
                                         resetCcmts.start()
                                         resetThreads.append(resetCcmts)

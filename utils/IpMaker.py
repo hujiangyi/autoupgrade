@@ -8,11 +8,13 @@ from threading import *
 from IPy import *
 
 class IpMaker:
-    def __init__(self,ipMakerType,segmentIp,segmentMask,segmentGateway,segmentExcludeIpList,iplist,cmIpMask,cmIpGateway):
+    def __init__(self,ipMakerType,segmentIp,segmentMask,segmentGateway,excludeIpList,iplist,cmIpMask,cmIpGateway):
         self.ipMakerType = ipMakerType
         self.ipsIndex = 0
         self.ipsIndexLock = Lock()
         if self.isSegment():
+            #如果是网段，需要跳过第一个地址
+            self.ipsIndex = 1
             try :
                 self.segmentIpList =  IP(segmentIp + '/' + segmentMask)
                 self.segmentMask = segmentMask
@@ -20,14 +22,14 @@ class IpMaker:
             except BaseException:
                 raise Exception('指定IP段配置错误，需要检查Excel中segmentIp和segmentMask列[{},{}]'.format(segmentIp,segmentMask))
             self.segmentExcludeIpList = []
-            if segmentExcludeIpList == None or segmentExcludeIpList == '':
+            if excludeIpList == None or excludeIpList == '':
                 raise Exception('指定IP段配置错误，需要检查Excel中segmentExcludeIpList列')
             else :
-                ips = segmentExcludeIpList.split(',').strip()
+                ips = excludeIpList.split(',')
                 for ip in ips :
                     try:
-                        IP(ip)
-                        self.segmentExcludeIpList.append(ip)
+                        IP(ip.strip())
+                        self.segmentExcludeIpList.append(ip.strip())
                     except BaseException:
                         raise Exception('指定IP段配置错误，需要检查Excel中segmentExcludeIpList列[{}]'.format(ip))
         elif self.isIPList():
@@ -45,8 +47,8 @@ class IpMaker:
                             try :
                                 specifyIp = {
                                     'ip' : IP(parts[0]).strCompressed(),
-                                    'gateway' : IP(parts[1]).strCompressed(),
-                                    'mask' : '255.255.255.255'
+                                    'mask' : IP(parts[1]).strCompressed(),
+                                    'gateway' : IP(parts[2]).strCompressed()
                                 }
                                 self.specifyIpList.append(specifyIp)
                             except BaseException:
@@ -68,7 +70,7 @@ class IpMaker:
         self.ipsIndexLock.acquire()
         try:
             if self.isSegment():
-                while self.ipsIndex < len(self.segmentIpList) :
+                while self.ipsIndex < self.segmentIpList.len() :
                     try :
                         ip = self.segmentIpList[self.ipsIndex].strCompressed()
                         if ip not in self.segmentExcludeIpList:
@@ -80,7 +82,7 @@ class IpMaker:
                 if self.ipsIndex < len(self.specifyIpList) :
                     try :
                         ip = self.specifyIpList[self.ipsIndex]
-                        return ip['ip'],self['mask'],self['gateway']
+                        return ip['ip'],ip['mask'],ip['gateway']
                     finally:
                         self.ipsIndex = self.ipsIndex + 1
                 else :
@@ -99,7 +101,7 @@ class IpMaker:
         finally:
             self.ipsIndexLock.release()
     def setCmIpList(self,cmIpList):
-        if isinstance(cmIpList,list):
+        if not isinstance(cmIpList,list):
             raise Exception('踢CM模式配置错误，CM IP LIST设置错误，必须是数组')
         self.cmIpList = cmIpList
 

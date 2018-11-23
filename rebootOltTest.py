@@ -1,4 +1,4 @@
-#encoding:gbk
+#encoding:utf-8
 from threading import *
 import datetime
 import os
@@ -40,10 +40,10 @@ def doUpgradeMud():
     cols = [{"key":"ip","width":100,"text":"IP"},
             {"key":"result","width":350,"text":"Result"},
             {"key":"clearResult","width":300,"text":"ClearResult"},
-            {"key":"isAAA","width":100,"text":"ÊÇ·ñ¿ªÆôAAA"},
-            {"key":"userName","width":100,"text":"ÕËºÅ"},
-            {"key":"password","width":100,"text":"ÃÜÂë"},
-            {"key":"enablePassword","width":100,"text":"enableÃÜÂë"}]
+            {"key":"isAAA","width":100,"text":"æ˜¯å¦å¼€å¯AAA"},
+            {"key":"userName","width":100,"text":"è´¦å·"},
+            {"key":"password","width":100,"text":"å¯†ç "},
+            {"key":"enablePassword","width":100,"text":"enableå¯†ç "}]
     listView.initColumn(cols)
 
     excel = oltExcelPath.get()

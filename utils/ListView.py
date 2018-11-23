@@ -1,4 +1,4 @@
-#encoding:gbk
+#encoding:utf-8
 from threading import Lock
 from ttk import *
 

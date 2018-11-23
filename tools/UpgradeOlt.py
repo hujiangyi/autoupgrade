@@ -1,4 +1,4 @@
-#encoding:gbk
+#encoding:utf-8
 from threading import *
 from pyping import *
 import time
@@ -7,6 +7,7 @@ import os
 import traceback
 from utils.TelnetVty import TelnetVty
 from utils.SshVty import SshVty
+import ConfigParser
 
 class UpgradeOlt(Thread):
     def __init__(self):
@@ -32,6 +33,7 @@ class UpgradeOlt(Thread):
         self.appPath = appPath
 
     def initLog(self, logPath, host):
+        self.encode = self.getConfig("system","encode")
         self.logPath = logPath
         self.cmdResultFile = open(logPath + host + "CmdResult.log", "w")
         self.logResultFile = open(logPath + host + "logFile.log", "w")
@@ -91,7 +93,8 @@ class UpgradeOlt(Thread):
         return self.client.readuntil(waitstr=waitstr,timeout=timeout)
 
     def readuntilMutl(self, waitstrs=['xxx'], timeout=0):
-        return self.client.readuntilMutl(waitstrs=waitstrs,timeout=timeout)
+        str = self.client.readuntilMutl(waitstrs=waitstrs,timeout=timeout)
+        return str
 
     def readuntilII(self, waitstr='xxx', timeout=0):
         return self.client.readuntilII(waitstr=waitstr,timeout=timeout)
@@ -108,7 +111,7 @@ class UpgradeOlt(Thread):
             re = self.readuntil('#')
             if errorMessage not in re :
                 return cmd,re
-        return None,re
+        return None,''
 
     def cmdExists(self,checkCmd,default):
         runCmd = 'list | include ' + checkCmd
@@ -128,8 +131,9 @@ class UpgradeOlt(Thread):
         self.cmdResultFile.flush()
 
     def log(self, str,cmts=None,headName='result'):
-        print self.host,str
-        str = datetime.datetime.now().strftime('%Y%m%d%H%M%S\t') + str + '\n'
+        msg = "{} {}".format(self.host,str).decode('UTF-8').encode(self.encode)
+        print msg
+        str = "{} {}\n".format(datetime.datetime.now().strftime('%Y%m%d%H%M%S\t'), str)
         self.logResultFile.write(str)
         self.logResultFile.flush()
         if cmts == None:
@@ -143,6 +147,11 @@ class UpgradeOlt(Thread):
         else :
             self.listView.setData(self.host + "_" + cmts,'result',msg)
         self.sheetW.write(self.excelRow, 5, msg)
+
+    def getConfig(self,section, key):
+        config = ConfigParser.ConfigParser()
+        config.read('config.conf')
+        return config.get(section, key)
 
     ###############################################download#############################################################
     def downloadImage(self):

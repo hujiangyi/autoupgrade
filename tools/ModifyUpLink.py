@@ -1,4 +1,4 @@
-#encoding:gbk
+#encoding:utf-8
 import traceback
 import time
 from ConfigCcmtsUplink import ConfigCcmtsUplink
@@ -10,7 +10,7 @@ class ModifyUpLink(UpgradeCcmts):
         row={"identifyKey":"ip",
              "ip":self.host,
              "result":"start",
-             "isAAA":self.isAAA == '1',
+             "isAAA":self.isAAA,
              "userName":self.userName,
              "password":self.password,
              "enablePassword":self.enablePassword}
@@ -27,7 +27,7 @@ class ModifyUpLink(UpgradeCcmts):
         except BaseException, msg:
             self.log(`msg`)
             self.writeResult(`msg`)
-            print 'traceback.format_exc():\n%s' % traceback.format_exc()
+            self.log('traceback.format_exc():\n%s' % traceback.format_exc())
 
     def connect(self,host,isAAA,userName,password,enablePassword,cmip,mask,cmgateway,logPath,sheetW,excelRow,vlan,gateway,ftpServer,ftpUserName,ftpPassword,configFile,threadNum,ccFilter,listView):
         print 'connect to host ' + host
