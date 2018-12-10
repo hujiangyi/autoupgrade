@@ -72,10 +72,10 @@ class ConfigCcmtsIp(UpgradeOlt):
             self.readuntil('(config-if-gpon-{}/{})#'.format(slot,port))
         time.sleep(5)
         ip = '{}.{}.{}.{}'.format(gateway,slot,port,device)
-        re = self.ping(ip)
+        re = self.parent.ping(ip)
         while not re :
             self.parent.log('ping {} error'.format(ip))
-            re = self.ping(ip)
+            re = self.parent.ping(ip)
         self.parent.log('ping {} success'.format(ip))
         self.parent.log('do telnet {}'.format(ip))
         self.send('telnet {}'.format(ip))
@@ -200,4 +200,12 @@ class ConfigCcmtsIp(UpgradeOlt):
             print msg
     def writeResult(self, msg,cmts=None):
         self.parent.writeResult(msg,cmts)
+
+    def ping(self, ip):
+        self.send('ping {} pktnum 1'.format(ip))
+        re = self.readuntil('#')
+        if ' 0% packet loss' in re:
+            return True
+        else:
+            return False
 
