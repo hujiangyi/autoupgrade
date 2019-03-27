@@ -124,12 +124,30 @@ class ConfigCcmtsIp(UpgradeOlt):
         self.readuntil('#')
         self.send('configure terminal')
         self.readuntil('(config)#')
-        self.send('interface ccmts 1/1/1')
-        self.readuntil('(config-if-ccmts-1/1/1)#')
+        '''
+lvhaiting(吕海艇) 11:39:22
+直接敲 interface ccmts 1就行了
+lvhaiting(吕海艇) 11:39:55
+在原来的cc上，interface ccmts 1 能自动补全为interface ccmts 1/1/1
+lisaifeng(李赛锋) 11:45:01
+C6/1/1-VLAN-185X(config)# interface ccmts 1
+C6/1/1-VLAN-185X(config-if-ccmts-1)#
+lisaifeng(李赛锋) 11:46:01
+E型是这样的
+
+Topvision(config)# interface ccmts 1/1/1 
+Topvision(config-if-ccmts-1/1/1)# 
+lisaifeng(李赛锋) 11:46:11
+就直接读个#吧
+lisaifeng(李赛锋) 11:47:29
+怕跑偏 可以识别 1)# 
+       '''
+        self.send('interface ccmts 1')
+        self.readuntil('1)#')
         self.send('cable upstream 1-4 shutdown')
-        self.readuntil('(config-if-ccmts-1/1/1)#')
+        self.readuntil('1)#')
         self.send('cable downstream 1-16 shutdown')
-        self.readuntil('(config-if-ccmts-1/1/1)#')
+        self.readuntil('1)#')
         self.send('exit')
         self.readuntil('(config)#')
         self.send('no ip address primary')
