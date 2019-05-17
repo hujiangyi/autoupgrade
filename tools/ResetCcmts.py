@@ -54,7 +54,7 @@ class ResetCcmts(UpgradeOlt):
         self.parent.log('ping {} success'.format(ip))
         self.parent.log('do telnet {}'.format(ip))
         self.send('telnet {}'.format(ip))
-        re = self.readuntilMutl(['Username:','username:','%Telnet exit successful','%Error:Connect to {} timeout!'.format(ip),'%Connect to {} timeout!'.format(ip)])
+        re = self.readuntilMutl(['Username:','username:','%Telnet exit successful','%Error:Connect to {} timeout!'.format(ip),'%Connect to {} timeout!'.format(ip)],timeout=30)
         if '%Telnet exit successful' in re:
             self.parent.log('%Telnet exit successful',cmts=key)
             return False,'%Telnet exit successful'

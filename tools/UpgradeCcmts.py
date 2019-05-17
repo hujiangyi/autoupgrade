@@ -33,7 +33,11 @@ class UpgradeCcmts(UpgradeOlt):
             # 会出现异常
             if self.ipMaker.ipMakerType == 'CMIP':
                 self.recordCmIp()
-            self.closeChannel()
+            if self.isCloseChannel :
+                self.closeChannel()
+            else :
+                self.allCmts, self.allkey, self.allVersion, self.allMac = self.getAllOnlineCmts()
+                self.upgradeStatus = {}
             self.doResetCmts(beforeUpgrade=True)
             state = self.mduUpgrade(self.vlan,self.gateway,self.ftpServer,self.ftpUserName,self.ftpPassword,self.imageFileName)
             if state:
@@ -49,7 +53,8 @@ class UpgradeCcmts(UpgradeOlt):
             self.writeResult(`msg`)
             self.log('traceback.format_exc():\n%s' % traceback.format_exc())
         finally:
-            self.openChannel()
+            if self.isCloseChannel :
+                self.openChannel()
             self.log('upgrade success')
     def doCollectData(self):
         try:
@@ -58,7 +63,8 @@ class UpgradeCcmts(UpgradeOlt):
             self.log(`msg`)
             self.log('traceback.format_exc():\n%s' % traceback.format_exc())
 
-    def connect(self,host,isAAA,userName,password,enablePassword,logPath,sheetW,excelRow,vlan,gateway,ftpServer,ftpUserName,ftpPassword,imageFileName,threadNum,version,cmvlan,listView,ipMaker,isSsh=False):
+    def connect(self,host,isAAA,userName,password,enablePassword,logPath,sheetW,excelRow,vlan,gateway,ftpServer,ftpUserName,ftpPassword,imageFileName,threadNum,version,cmvlan,isCloseChannel,listView,ipMaker,includeSlot,isSsh=False,
+                sendresetinterval=30,checkstateinterval=60,showccversioninterval=2,upgradeinterval=5):
         print 'connect to host ' + host
         self.listView = listView
         self.vlan = vlan
@@ -70,7 +76,13 @@ class UpgradeCcmts(UpgradeOlt):
         self.threadNum = threadNum
         self.version = version
         self.cmvlan = cmvlan
+        self.isCloseChannel = isCloseChannel
         self.ipMaker = ipMaker
+        self.includeSlot = includeSlot
+        self.sendresetinterval = sendresetinterval
+        self.checkstateinterval = checkstateinterval
+        self.showccversioninterval = showccversioninterval
+        self.upgradeinterval = upgradeinterval
         self.initListView(listView)
         self.initExcel(sheetW,excelRow)
         self.initLog(logPath,host)
@@ -106,7 +118,7 @@ class UpgradeCcmts(UpgradeOlt):
     def closeChannel(self):
         self.log('closeChannel')
         self.upgradeStatus = {}
-        self.allCmts,self.allkey,self.allVersion,self.allMac = self.getAllOnlineCmts(raiseException=True)
+        self.allCmts,self.allkey,self.allVersion,self.allMac = self.getAllOnlineCmts(raiseException=True,isFilterSlot=False)
         self.closeChannelCmtsKeys = self.allkey
         self.closeChannelList = {}
         self.send('end')
@@ -114,8 +126,9 @@ class UpgradeCcmts(UpgradeOlt):
         self.send('configure terminal')
         self.readuntil('(config)#')
         for key in self.closeChannelCmtsKeys:
-            nversion = self.allVersion[key]
-            if nversion != None and nversion != 'no version' and nversion != '' and nversion != self.version:
+            # 关闭信道不需要过滤版本
+            # nversion = self.allVersion[key]
+            # if nversion != None and nversion != 'no version' and nversion != '' and nversion != self.version:
                 self.log('close cmts{} channel'.format(key))
                 self.closeChannelList[key] = []
                 self.send('interface ccmts {}'.format(key))
@@ -274,7 +287,7 @@ class UpgradeCcmts(UpgradeOlt):
                             self.log('开始升级{}'.format(key))
                             self.send('upgrade mdu image ftp {} {} {} {} interface {}'.format(ftpServer ,ftpUsername,ftpPassword,imageFileName,key ))
                             self.readuntil('(config)#')
-                            self.sleepT(3)
+                            self.sleepT(self.upgradeinterval)
 
             self.log('第二轮下发升级指令')
             for slot, portMap in self.allCmts.items():
@@ -289,7 +302,7 @@ class UpgradeCcmts(UpgradeOlt):
                                 self.log('{}第一轮下发升级指令失败，重新下发一次'.format(key))
                                 self.send('upgrade mdu image ftp {} {} {} {} interface {}'.format(ftpServer ,ftpUsername,ftpPassword,imageFileName,key ))
                                 self.readuntil('(config)#')
-                                self.sleepT(3)
+                                self.sleepT(self.upgradeinterval)
 
             self.log('第三轮下发升级指令')
             for slot, portMap in self.allCmts.items():
@@ -303,7 +316,7 @@ class UpgradeCcmts(UpgradeOlt):
                                 self.log('{}第二轮下发升级指令失败，重新下发一次'.format(key))
                                 self.send('upgrade mdu image ftp {} {} {} {} interface {}'.format(ftpServer ,ftpUsername,ftpPassword,imageFileName,key ))
                                 self.readuntil('(config)#')
-                                self.sleepT(3)
+                                self.sleepT(self.upgradeinterval)
             return True
         else :
             return False
@@ -342,6 +355,8 @@ class UpgradeCcmts(UpgradeOlt):
             return True,''
 
     def doConfigPon(self,vlan,cmvlan,slot,port,slotType,gateway):
+        if not self.includeSlot.__contains__(slot):
+            return
         self.log('configPon vlan {} cm vlan{} key{}/{}'.format(vlan,cmvlan,slot,port))
         self.confgVlan(vlan,gateway)
         time.sleep(2)
@@ -388,7 +403,7 @@ class UpgradeCcmts(UpgradeOlt):
             return cols[2]
         return 'no version'
 
-    def getAllOnlineCmts(self,raiseException=False,key=None):
+    def getAllOnlineCmts(self,raiseException=False,key=None,isFilterSlot=True):
         allCmts = {}
         allVersion = {}
         allMac = {}
@@ -418,8 +433,12 @@ class UpgradeCcmts(UpgradeOlt):
             device = nums[2]
             mac = cols[1]
             key = '{}/{}/{}'.format(slot,port,device)
+            if not self.includeSlot.__contains__(slot) and isFilterSlot :
+                self.log('slot abort {}'.format(key))
+                continue
             if not allKey.__contains__(key) :
                 allKey.append(key)
+            time.sleep(self.showccversioninterval)
             version = self.getCcmtsVersion(key)
             self.log('{}:{}'.format(key,version))
             allVersion[key] = version
@@ -482,6 +501,8 @@ class UpgradeCcmts(UpgradeOlt):
         upgradeStatusTimeout = {}
         while True:
             for slot,portMap in self.allCmts.items():
+                if not self.includeSlot.__contains__(slot):
+                    continue
                 for port,deviceList in portMap.items():
                     for device in deviceList:
                         key =  '{}/{}/{}'.format(slot,port,device)
@@ -555,6 +576,8 @@ class UpgradeCcmts(UpgradeOlt):
             return True,''
         # return True,''
     def doClearPonVlanConfig(self,vlan,cmvlan,slot,port):
+        if not self.includeSlot.__contains__(slot):
+            return
         self.log('doClearPonVlanConfig vlan {} {}/{}'.format(vlan,slot,port),headName='clearResult')
         self.send('end')
         self.readuntil('#')
@@ -624,6 +647,8 @@ class UpgradeCcmts(UpgradeOlt):
         self.readuntil('(config)#')
         if beforeUpgrade :
             for slot, portMap in self.allCmts.items():
+                if not self.includeSlot.__contains__(slot):
+                    continue
                 for port, deviceList in portMap.items():
                     for device in deviceList:
                         key = '{}/{}/{}'.format(slot,port,device)
@@ -633,13 +658,15 @@ class UpgradeCcmts(UpgradeOlt):
                             self.readuntil('(config-if-ccmts-{})#'.format(key))
                             self.send('reset')
                             self.readuntil('(config-if-ccmts-{})#'.format(key))
-                            self.sleepT(1)
+                            self.sleepT(self.sendresetinterval)
         else :
             resetCmts = []
             resetThreads = []
             self.faildCount = 0
             self.successCount = 0
             for slot, portMap in self.allCmts.items():
+                if not self.includeSlot.__contains__(slot):
+                    continue
                 for port, deviceList in portMap.items():
                     slotGateway = int(self.gateway)
                     for device in deviceList:
@@ -668,7 +695,7 @@ class UpgradeCcmts(UpgradeOlt):
                                         resetCcmts.setDaemon(True)
                                         resetCcmts.start()
                                         resetThreads.append(resetCcmts)
-                                        time.sleep(1)
+                                        time.sleep(self.sendresetinterval)
                                         break
                                     else:
                                         time.sleep(10)
@@ -694,6 +721,8 @@ class UpgradeCcmts(UpgradeOlt):
     def clearConfig(self,vlan):
         self.log('clearConfig',headName='clearResult')
         for slot,portMap in self.allCmts.items():
+            if not self.includeSlot.__contains__(slot):
+                continue
             for port,deviceList in portMap.items():
                 slotVlan = int(vlan)
                 state,msg = self.doClearPonVlanConfig(slotVlan,self.cmvlan,slot,port)
@@ -702,6 +731,8 @@ class UpgradeCcmts(UpgradeOlt):
         self.doClearVlanConfig(vlan)
         self.sleepT(60)
         for slot,portMap in self.allCmts.items():
+            if not self.includeSlot.__contains__(slot):
+                continue
             for port,deviceList in portMap.items():
                 slotVlan = int(vlan)
                 for device in deviceList:
@@ -721,6 +752,6 @@ class UpgradeCcmts(UpgradeOlt):
                     if self.upgradeStatus.has_key(key) or beforeUpgrade:
                         self.listView.setData('{}_{}'.format(self.host,key), 'result', version)
                 break
-            time.sleep(30)
+            time.sleep(self.checkstateinterval)
 
 

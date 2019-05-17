@@ -110,6 +110,12 @@ def doUpgradeMud():
     threadNum = threadNumStr.get()
     version = versionStr.get()
     cmvlan = cmvlanIV.get()
+    isCloseChannel = bool(closeChannelB.get())
+
+    sendresetinterval = getConfig("interval", "sendreset", "30")
+    checkstateinterval = getConfig("interval", "checkstate", "60")
+    showccversioninterval = getConfig("interval", "showccversion", "2")
+    upgradeinterval = getConfig("interval", "upgrade", "5")
 
     logPath = './log/' + datetime.datetime.now().strftime('%Y%m%d%H%M%S') + '/'
     os.makedirs(logPath)
@@ -146,10 +152,21 @@ def doUpgradeMud():
             iplist = sheetR.cell(i, 11).value
             cmIpMask = sheetR.cell(i, 12).value
             cmIpGateway = sheetR.cell(i, 13).value
+            includeSlotCell = sheetR.cell(i, 14)
+            includeSlotCellType = includeSlotCell.ctype
+            includeSlotCellValue = includeSlotCell.value
+            if includeSlotCellType == 2 :
+                includeSlotStr = str(int(includeSlotCellValue))
+            else :
+                includeSlotStr = str(includeSlotCellValue)
+            includeSlot = []
+            if includeSlotStr != None and includeSlotStr != '' :
+                includeSlot = includeSlotStr.split(",")
             ipMaker = IpMaker(ipMakerType,segmentIp,segmentMask,segmentGateway,segmentExcludeIpList,iplist,cmIpMask,cmIpGateway)
             upgradeCcmts = UpgradeCcmts()
             upgradeCcmts.connect(ip, isAAA, username, password, enablePassword, logPath, sheetW, i, cvlan, gateway,
-                                 ftpServer, ftpUserName, ftpPassword, imageFileName,int(threadNum),version,cmvlan,listView,ipMaker,isSsh=isSsh)
+                                 ftpServer, ftpUserName, ftpPassword, imageFileName,int(threadNum),version,cmvlan,isCloseChannel,listView,ipMaker,includeSlot,isSsh=isSsh,
+                                 sendresetinterval=sendresetinterval,checkstateinterval=checkstateinterval,showccversioninterval=showccversioninterval,upgradeinterval=upgradeinterval)
             upgradeCcmts.setDaemon(True)
             upgradeCcmts.start()
     resultDialog.mainloop()
@@ -166,6 +183,8 @@ binNameConfig = getConfig("default","binName","c.bin")
 threadNumConfig = getConfig("default","threadNum","10")
 targetVersionConfig = getConfig("default","targetVersion","")
 cmvlanConfig = getConfig("default","cmvlan","1")
+closeChannelConfig = getConfig("default","closeChannel","1")
+
 root = Tk()
 oltExcelPath = StringVar()
 cvlanStr = StringVar()
@@ -177,6 +196,7 @@ imageFileNameStr = StringVar()
 threadNumStr = StringVar()
 versionStr = StringVar()
 cmvlanIV = IntVar()
+closeChannelB = IntVar()
 cvlanStr.set(int(cvlanConfig))
 gatewayStr.set(gatewayConfig)
 ftpServerStr.set(ftpServerConfig)
@@ -186,6 +206,7 @@ imageFileNameStr.set(binNameConfig)
 threadNumStr.set(threadNumConfig)
 versionStr.set(targetVersionConfig)
 cmvlanIV.set(int(cmvlanConfig))
+closeChannelB.set(int(closeChannelConfig))
 
 row = 0
 row = rowView(row,'OltExcel',oltExcelPath,fun=selectOltExcelPath)
@@ -198,5 +219,6 @@ row = rowView(row,'Image Name',imageFileNameStr)
 row = rowView(row,'Thread count',threadNumStr)
 row = rowView(row,'Target version',versionStr)
 row = rowView(row,'CM vlan',cmvlanIV)
+row = rowViewCheckbox(row,'是否关闭信道',closeChannelB)
 Button(root,text='complte',command=closeDialog).grid(row=row,column=1)
 root.mainloop()
